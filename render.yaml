@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: reading-the-fed
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn dashboard:server --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
