@@ -277,28 +277,61 @@ def forecast_bvar(result: BVARResult, h: int,
 # AR(p) baseline
 # ─────────────────────────────────────────────────────────────────────────────
 
-def fit_ar(y: np.ndarray, p: int = 4) -> dict:
+def fit_ar(y: np.ndarray, p: int = 4,
+           exog: Optional[np.ndarray] = None) -> dict:
     """
-    Fit an OLS AR(p) model for a single series.
-    Returns dict with coefficients, for h-step ahead forecast.
+    Fit an OLS AR(p) model for a single series, optionally with exogenous
+    regressors (e.g. LLM principal components) — the AR+LLM model.
+
+    Parameters
+    ----------
+    y    : (T,) time series
+    p    : lag order
+    exog : (T, k) exogenous regressors aligned with y; optional
+
+    Returns dict with coefficients and metadata for recursive forecasting.
     """
     T = len(y)
     Y = np.array([y[i:T - p + i] for i in range(p)]).T   # (T-p, p)
     y_dep = y[p:]
-    X = np.hstack([Y, np.ones((T - p, 1))])
+    X = np.hstack([Y, np.ones((T - p, 1))])               # (T-p, p+1)
+
+    k_exog = 0
+    if exog is not None:
+        X = np.hstack([X, exog[p:, :]])                   # (T-p, p+1+k)
+        k_exog = exog.shape[1]
+
     b = np.linalg.lstsq(X, y_dep, rcond=None)[0]
     resid = y_dep - X @ b
-    return {"b": b, "p": p, "last_obs": y[-p:].copy(), "sigma2": np.var(resid)}
+    last_exog = exog[-1:, :].copy() if exog is not None else None
+    return {"b": b, "p": p, "k_exog": k_exog,
+            "last_obs": y[-p:].copy(), "last_exog": last_exog,
+            "sigma2": np.var(resid)}
 
 
-def forecast_ar(fit: dict, h: int) -> np.ndarray:
-    """h-step recursive forecast from AR fit."""
-    p     = fit["p"]
-    b     = fit["b"]
-    hist  = list(fit["last_obs"])
+def forecast_ar(fit: dict, h: int,
+                future_exog: Optional[np.ndarray] = None) -> np.ndarray:
+    """
+    h-step recursive forecast from AR (or AR+LLM) fit.
+
+    If the model was fitted with exogenous regressors and future_exog is None,
+    the last observed exog values are repeated (persistence assumption,
+    consistent with the BVAR+LLM forecasting convention).
+    """
+    p      = fit["p"]
+    b      = fit["b"]
+    k_exog = fit.get("k_exog", 0)
+    hist   = list(fit["last_obs"])
+
+    if k_exog > 0:
+        if future_exog is None:
+            future_exog = np.tile(fit["last_exog"], (h, 1))  # (h, k)
+
     preds = []
-    for _ in range(h):
-        x    = hist[-p:][::-1] + [1.0]   # lags, most recent first, + intercept
+    for step in range(h):
+        x = hist[-p:][::-1] + [1.0]          # AR lags + intercept
+        if k_exog > 0:
+            x = x + list(future_exog[step])  # append exog
         yhat = np.dot(b, x)
         preds.append(yhat)
         hist.append(yhat)

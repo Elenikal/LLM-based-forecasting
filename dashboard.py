@@ -1,22 +1,12 @@
 """
-dashboard.py
-============
-Plotly Dash dashboard for:
-  "Reading the Fed: LLM-Augmented Forecasting of U.S. GDP and Financial Indicators"
-
-Usage:
-  python dashboard.py
-  Then open http://127.0.0.1:8050
-
-Data requirements (in ./outputs/ folder):
-  results_main.csv
-  results_subperiod.csv
-  llm_scores.csv
+dashboard.py — Reading the Fed (4-model, 6-variable version)
+Usage: python dashboard.py  →  http://127.0.0.1:8050
 """
 
 import pandas as pd
 import numpy as np
 from pathlib import Path
+import os
 
 import dash
 from dash import dcc, html, Input, Output
@@ -33,7 +23,11 @@ try:
 except FileNotFoundError as e:
     raise SystemExit(f"\nMissing data file: {e}\nRun the pipeline first: python run.py --live\n")
 
-# ── Constants ──────────────────────────────────────────────────────────────────
+# ── Keep only the 6 target variables ──────────────────────────────────────────
+KEEP = ["GDPC1_gr", "CPIAUCSL_yoy", "PCEPILFE_yoy", "UNRATE", "FEDFUNDS", "T10Y2Y"]
+main_df = main_df[main_df["variable"].isin(KEEP)]
+sub_df  = sub_df[sub_df["variable"].isin(KEEP)]
+
 VAR_LABELS = {
     "GDPC1_gr":     "Real GDP growth",
     "CPIAUCSL_yoy": "CPI inflation",
@@ -41,8 +35,6 @@ VAR_LABELS = {
     "UNRATE":       "Unemployment rate",
     "FEDFUNDS":     "Federal funds rate",
     "T10Y2Y":       "10Y-2Y spread",
-    "BAA10Y":       "BAA-10Y spread",
-    "VIXCLS_log":   "log(VIX)",
 }
 
 REGIME_BANDS = [
@@ -51,27 +43,33 @@ REGIME_BANDS = [
     {"x0": 2021.5,  "x1": 2023.5,  "color": "rgba(230,126,34,0.12)", "label": "Inflation surge"},
 ]
 
-# Colour palette — pure hex only, no alpha appended
 COLORS_FOMC = ["#1a4e8c", "#c0392b", "#0f6e56", "#d68910", "#533fad"]
 COLORS_BB   = ["#5b9bd5", "#e07070", "#3fbf9f", "#f5b942", "#a080e0"]
 
 def hex_to_rgba(h, a=0.10):
-    """Convert #rrggbb to rgba(r,g,b,a) — works in Plotly 6."""
     r, g, b = int(h[1:3],16), int(h[3:5],16), int(h[5:7],16)
     return f"rgba({r},{g},{b},{a})"
 
 def q2num(q):
     yr, qt = str(q).split("Q")
-    return int(yr) + (int(qt) - 1) / 4
+    return int(yr) + (int(qt)-1)/4
 
 scores_df["_x"] = [q2num(q) for q in scores_df.index]
 
+# ── Compute KPI stats from data ────────────────────────────────────────────────
+_ar_wins  = int((main_df["AR_LLM_ratio"] < 1).sum())
+_bv_wins  = int((main_df["BVAR_LLM_ratio"] < main_df["BVAR_ratio"]).sum())
+_n_total  = len(main_df)
+_sig_ar   = int(main_df[
+    main_df["AR_LLM_dm_sig"].notna() &
+    ~main_df["AR_LLM_dm_sig"].isin(["", "nan"])
+].shape[0])
+_best_gain = round((1 - main_df["AR_LLM_ratio"].min()) * 100)
+
 # ── Shared styles ──────────────────────────────────────────────────────────────
 CARD = {
-    "background":   "#ffffff",
-    "borderRadius": "10px",
-    "padding":      "20px 24px",
-    "boxShadow":    "0 1px 6px rgba(0,0,0,0.08)",
+    "background": "#ffffff", "borderRadius": "10px",
+    "padding": "20px 24px", "boxShadow": "0 1px 6px rgba(0,0,0,0.08)",
     "marginBottom": "20px",
 }
 
@@ -99,10 +97,10 @@ app.layout = html.Div(
             html.H1("Reading the Fed",
                     style={"color": "white", "margin": "0 0 4px",
                            "fontSize": "30px", "fontWeight": "bold"}),
-            html.P("LLM-Augmented Forecasting of U.S. GDP and Financial Indicators",
+            html.P("Central Bank Text as a Forecasting Signal",
                    style={"color": "rgba(255,255,255,0.85)", "margin": "0",
                           "fontSize": "14px", "fontStyle": "italic"}),
-            html.P("Out-of-sample: 2020Q1-2024Q4  |  FOMC minutes + Beige Books -> Claude API -> BVAR",
+            html.P("Out-of-sample: 2020Q1–2024Q4  |  FOMC minutes + Beige Books → Claude API → AR / BVAR",
                    style={"color": "rgba(255,255,255,0.6)", "margin": "5px 0 0",
                           "fontSize": "12px"}),
         ]),
@@ -110,14 +108,13 @@ app.layout = html.Div(
         html.Div(style={"maxWidth": "1360px", "margin": "0 auto",
                         "padding": "0 28px 50px"}, children=[
 
-            # KPI row
-            html.Div(style={"display": "grid",
-                            "gridTemplateColumns": "repeat(4, 1fr)",
+            # KPI row — computed from data
+            html.Div(style={"display": "grid", "gridTemplateColumns": "repeat(4, 1fr)",
                             "gap": "16px", "marginBottom": "24px"}, children=[
-                kpi_card("16 / 16", "Variables where BVAR+LLM beats BVAR",      "#1a4e8c"),
-                kpi_card("-50%",    "Max RMSE gain (GDP, inflation surge, h=1)", "#0f6e56"),
-                kpi_card("10 / 16", "Statistically significant improvements",    "#533fad"),
-                kpi_card("69 qtrs", "Quarters with LLM-scored Fed documents",    "#d68910"),
+                kpi_card(f"{_ar_wins} / {_n_total}", "AR+LLM beats plain AR",             "#7d3c98"),
+                kpi_card(f"-{_best_gain}%",          "Max AR+LLM RMSE gain over AR",      "#0f6e56"),
+                kpi_card(f"{_bv_wins} / {_n_total}", "BVAR+LLM beats plain BVAR",         "#1a4e8c"),
+                kpi_card(f"{_sig_ar} / {_n_total}",  "Significant at ≤10% (DM, AR+LLM)", "#d68910"),
             ]),
 
             # Tab panel
@@ -139,8 +136,7 @@ app.layout = html.Div(
     ]
 )
 
-
-# ── Tab router ────────────────────────────────────────────────────────────────
+# ── Tab router ─────────────────────────────────────────────────────────────────
 @app.callback(Output("tab-content", "children"), Input("tabs", "value"))
 def render_tab(tab):
     if tab == "scores":  return scores_tab()
@@ -157,11 +153,9 @@ def scores_tab():
             html.Label("Source:", style={"fontWeight": "bold", "fontSize": "13px"}),
             dcc.RadioItems(
                 id="score-source",
-                options=[
-                    {"label": "FOMC minutes", "value": "fomc"},
-                    {"label": "Beige Book",   "value": "bb"},
-                    {"label": "Both",         "value": "both"},
-                ],
+                options=[{"label": "FOMC minutes", "value": "fomc"},
+                         {"label": "Beige Book",   "value": "bb"},
+                         {"label": "Both",         "value": "both"}],
                 value="fomc", inline=True,
                 style={"fontSize": "13px"},
                 inputStyle={"marginRight": "5px"},
@@ -170,22 +164,16 @@ def scores_tab():
         ]),
         dcc.Graph(id="scores-chart", style={"height": "560px"},
                   config={"displayModeBar": False}),
-        html.P(
-            "Each panel shows one LLM sentiment dimension extracted by Claude. "
-            "Red shading = GFC, yellow = COVID shock, orange = inflation surge.",
-            style={"fontSize": "11px", "color": "#888", "marginTop": "8px",
-                   "fontStyle": "italic"}
-        ),
+        html.P("Each panel shows one LLM sentiment dimension extracted by Claude on a −2 to +2 scale. "
+               "Red shading = GFC, yellow = COVID, orange = inflation surge.",
+               style={"fontSize": "11px", "color": "#888", "marginTop": "8px",
+                      "fontStyle": "italic"}),
     ])
-
 
 @app.callback(Output("scores-chart", "figure"), Input("score-source", "value"))
 def update_scores(source):
-    prefix_map = {
-        "fomc": ["fomc_minutes_"],
-        "bb":   ["beige_book_"],
-        "both": ["fomc_minutes_", "beige_book_"],
-    }
+    prefix_map = {"fomc": ["fomc_minutes_"], "bb": ["beige_book_"],
+                  "both": ["fomc_minutes_", "beige_book_"]}
     prefixes  = prefix_map.get(source, ["fomc_minutes_"])
     dim_names = ["growth_expectations", "inflation_concern", "labor_market",
                  "credit_conditions",   "policy_uncertainty"]
@@ -194,27 +182,19 @@ def update_scores(source):
 
     fig = make_subplots(rows=5, cols=1, shared_xaxes=True,
                         subplot_titles=titles, vertical_spacing=0.05)
-
     x = scores_df["_x"].values
 
     for row, (dim, title) in enumerate(zip(dim_names, titles), start=1):
         xref = "x" if row == 1 else f"x{row}"
         yref = "y" if row == 1 else f"y{row}"
 
-        # Regime shading on every panel
         for band in REGIME_BANDS:
-            fig.add_shape(
-                type="rect",
-                xref=xref, yref=yref,
-                x0=band["x0"], x1=band["x1"], y0=-2.4, y1=2.4,
-                fillcolor=band["color"], line_width=0, layer="below",
-            )
-            fig.add_annotation(
-                x=(band["x0"] + band["x1"]) / 2, y=2.05,
-                xref=xref, yref=yref,
-                text=band["label"], showarrow=False,
-                font={"size": 8, "color": "#aaa"},
-            )
+            fig.add_shape(type="rect", xref=xref, yref=yref,
+                          x0=band["x0"], x1=band["x1"], y0=-2.4, y1=2.4,
+                          fillcolor=band["color"], line_width=0, layer="below")
+            fig.add_annotation(x=(band["x0"]+band["x1"])/2, y=2.05,
+                               xref=xref, yref=yref, text=band["label"],
+                               showarrow=False, font={"size": 8, "color": "#aaa"})
 
         for pf in prefixes:
             col_name = pf + dim
@@ -223,54 +203,34 @@ def update_scores(source):
             clr_list = COLORS_FOMC if "fomc" in pf else COLORS_BB
             clr      = clr_list[row - 1]
             fill_clr = hex_to_rgba(clr, 0.10)
-            src      = "FOMC" if "fomc" in pf else "BB"
-
-            # Mask to only available (non-NaN) quarters — critical for Beige Book
-            y_all  = scores_df[col_name].values
-            mask   = ~pd.isna(y_all.astype(float))
-            x_plot = x[mask]
-            y_plot = y_all[mask].astype(float)
-
+            y_all    = scores_df[col_name].values
+            mask     = ~pd.isna(y_all.astype(float))
             fig.add_trace(go.Scatter(
-                x=x_plot, y=y_plot,
+                x=x[mask], y=y_all[mask].astype(float),
                 mode="lines+markers",
-                name=f"{src}",
                 line={"color": clr, "width": 1.8},
                 marker={"size": 3, "color": clr},
-                fill="tozeroy",
-                fillcolor=fill_clr,
-                connectgaps=False,
-                showlegend=False,   # subplot titles label each panel — no legend needed
+                fill="tozeroy", fillcolor=fill_clr,
+                connectgaps=False, showlegend=False,
             ), row=row, col=1)
 
         fig.add_hline(y=0, line_dash="dot", line_color="#bbb",
                       line_width=0.8, row=row, col=1)
-        fig.update_yaxes(range=[-2.4, 2.4], tickvals=[-2, -1, 0, 1, 2],
+        fig.update_yaxes(range=[-2.4, 2.4], tickvals=[-2,-1,0,1,2],
                          tickfont={"size": 9}, row=row, col=1)
 
-    # Set x-axis range to start where the selected source has data
-    if source == "bb":
-        x_start = 2011.0   # Beige Book available from 2011Q1
-    else:
-        x_start = 2007.5   # FOMC minutes from 2007Q4
-
+    x_start = 2011.0 if source == "bb" else 2007.5
     year_ticks = [y for y in range(2008, 2025, 2) if y >= x_start]
-    fig.update_xaxes(tickvals=year_ticks,
-                     ticktext=[str(y) for y in year_ticks],
+    fig.update_xaxes(tickvals=year_ticks, ticktext=[str(y) for y in year_ticks],
                      range=[x_start, 2025.0])
-
-    fig.update_layout(
-        height=600,
-        margin={"l": 55, "r": 20, "t": 40, "b": 30},
-        plot_bgcolor="white", paper_bgcolor="white",
-        font={"family": "Georgia, serif", "size": 10},
-        showlegend=False,
-        hovermode="x unified",
-    )
+    fig.update_layout(height=600, margin={"l":55,"r":20,"t":40,"b":30},
+                      plot_bgcolor="white", paper_bgcolor="white",
+                      font={"family":"Georgia, serif","size":10},
+                      showlegend=False, hovermode="x unified")
     return fig
 
 
-# ── TAB 2: RMSE Comparison ────────────────────────────────────────────────────
+# ── TAB 2: RMSE Comparison (4 models) ─────────────────────────────────────────
 def rmse_tab():
     return html.Div([
         html.Div(style={"display": "flex", "gap": "16px", "flexWrap": "wrap",
@@ -278,11 +238,9 @@ def rmse_tab():
             html.Label("Horizon:", style={"fontWeight": "bold", "fontSize": "13px"}),
             dcc.RadioItems(
                 id="rmse-horizon",
-                options=[
-                    {"label": "h = 1 quarter",  "value": 1},
-                    {"label": "h = 2 quarters", "value": 2},
-                    {"label": "Both",            "value": 0},
-                ],
+                options=[{"label": "h = 1 quarter",  "value": 1},
+                         {"label": "h = 2 quarters", "value": 2},
+                         {"label": "Both",            "value": 0}],
                 value=0, inline=True,
                 style={"fontSize": "13px"},
                 inputStyle={"marginRight": "5px"},
@@ -291,73 +249,81 @@ def rmse_tab():
         ]),
         dcc.Graph(id="rmse-chart", style={"height": "500px"},
                   config={"displayModeBar": False}),
-        html.P(
-            "RMSE ratios vs AR(4) baseline — below 1.0 beats the AR. "
-            "Dark green = BVAR+LLM wins over BVAR. "
-            "Stars = DM significance (* 10%, ** 5%, *** 1%).",
-            style={"fontSize": "11px", "color": "#888", "marginTop": "8px",
-                   "fontStyle": "italic"}
-        ),
+        html.P("RMSE ratios vs AR(4) baseline. Grey = AR (1.0), blue = BVAR, "
+               "green = BVAR+LLM, purple = AR+LLM. Purple shading = AR+LLM beats AR. "
+               "Stars: purple = AR+LLM vs AR, red = BVAR+LLM vs BVAR (DM test).",
+               style={"fontSize": "11px", "color": "#888", "marginTop": "8px",
+                      "fontStyle": "italic"}),
     ])
-
 
 @app.callback(Output("rmse-chart", "figure"), Input("rmse-horizon", "value"))
 def update_rmse(h_val):
-    vars_ord = ["GDPC1_gr", "CPIAUCSL_yoy", "PCEPILFE_yoy", "UNRATE",
-                "FEDFUNDS", "T10Y2Y", "BAA10Y", "VIXCLS_log"]
-    labels   = [VAR_LABELS[v] for v in vars_ord]
+    labels   = [VAR_LABELS[v] for v in KEEP]
     horizons = [1, 2] if h_val == 0 else [h_val]
+    w = 0.20
 
     fig = make_subplots(rows=1, cols=len(horizons),
-                        subplot_titles=[f"h = {h}" for h in horizons],
-                        shared_yaxes=False)
+                        subplot_titles=[f"h = {h}" for h in horizons])
 
     for col_idx, h in enumerate(horizons, start=1):
-        sub    = main_df[main_df["horizon"] == h].set_index("variable")
-        bvar_r = [float(sub.loc[v, "BVAR_ratio"])     if v in sub.index else None for v in vars_ord]
-        llm_r  = [float(sub.loc[v, "BVAR_LLM_ratio"]) if v in sub.index else None for v in vars_ord]
-        sigs   = [str(sub.loc[v, "BVAR_LLM_dm_sig"])  if v in sub.index else ""   for v in vars_ord]
+        sub     = main_df[main_df["horizon"] == h].set_index("variable")
+        bvar_r  = [float(sub.loc[v,"BVAR_ratio"])     if v in sub.index else np.nan for v in KEEP]
+        llm_r   = [float(sub.loc[v,"BVAR_LLM_ratio"]) if v in sub.index else np.nan for v in KEEP]
+        arlm_r  = [float(sub.loc[v,"AR_LLM_ratio"])   if v in sub.index else np.nan for v in KEEP]
+        sigs_bl = [str(sub.loc[v,"BVAR_LLM_dm_sig"])  if v in sub.index else "" for v in KEEP]
+        sigs_al = [str(sub.loc[v,"AR_LLM_dm_sig"])    if v in sub.index else "" for v in KEEP]
 
-        llm_colors = [
-            "#0f6e56" if (lr is not None and br is not None and lr < br) else "#a8d5c4"
-            for lr, br in zip(llm_r, bvar_r)
-        ]
+        x = list(range(len(KEEP)))
+        offsets = [-1.5*w, -0.5*w, 0.5*w, 1.5*w]
 
-        fig.add_trace(go.Bar(
-            x=labels, y=bvar_r, name="BVAR / AR",
-            marker_color="#1a4e8c", opacity=0.75,
-            offsetgroup="bvar", showlegend=(col_idx == 1),
-        ), row=1, col=col_idx)
-
-        fig.add_trace(go.Bar(
-            x=labels, y=llm_r, name="BVAR+LLM / AR",
-            marker_color=llm_colors,
-            offsetgroup="llm",
-            text=[s if s not in ("", "nan") else "" for s in sigs],
-            textposition="outside",
-            textfont={"color": "#c0392b", "size": 11},
-            showlegend=(col_idx == 1),
-        ), row=1, col=col_idx)
+        # AR bar
+        fig.add_trace(go.Bar(x=[l for l in labels], y=[1.0]*len(KEEP),
+                             name="AR (= 1.0)", marker_color="#aaaaaa",
+                             opacity=0.55, offsetgroup="ar",
+                             showlegend=(col_idx==1)), row=1, col=col_idx)
+        # BVAR bar
+        fig.add_trace(go.Bar(x=labels, y=bvar_r, name="BVAR / AR",
+                             marker_color="#1a4e8c", opacity=0.75,
+                             offsetgroup="bvar", showlegend=(col_idx==1)),
+                      row=1, col=col_idx)
+        # BVAR+LLM bar
+        bvllm_c = ["#0f6e56" if (not np.isnan(l) and not np.isnan(b) and l < b)
+                   else "#a8d5c4" for l, b in zip(llm_r, bvar_r)]
+        fig.add_trace(go.Bar(x=labels, y=llm_r, name="BVAR+LLM / AR",
+                             marker_color=bvllm_c, opacity=0.85,
+                             offsetgroup="bvllm",
+                             text=[s if s not in ("","nan","None") else "" for s in sigs_bl],
+                             textposition="outside",
+                             textfont={"color":"#c0392b","size":10},
+                             showlegend=(col_idx==1)),
+                      row=1, col=col_idx)
+        # AR+LLM bar
+        arlm_c = ["#7d3c98" if (not np.isnan(a) and a < 1.0)
+                  else "#d7bde2" for a in arlm_r]
+        fig.add_trace(go.Bar(x=labels, y=arlm_r, name="AR+LLM / AR",
+                             marker_color=arlm_c, opacity=0.85,
+                             offsetgroup="arlm",
+                             text=[s if s not in ("","nan","None") else "" for s in sigs_al],
+                             textposition="outside",
+                             textfont={"color":"#7d3c98","size":10},
+                             showlegend=(col_idx==1)),
+                      row=1, col=col_idx)
 
         fig.add_hline(y=1.0, line_dash="dash", line_color="black",
-                      line_width=1.5, row=1, col=col_idx)
-
+                      line_width=1.2, row=1, col=col_idx)
+        fig.update_xaxes(tickangle=-35, tickfont={"size":9}, row=1, col=col_idx)
         fig.update_yaxes(title_text="RMSE ratio (vs AR)", rangemode="tozero",
                          row=1, col=col_idx)
-        fig.update_xaxes(tickangle=-35, tickfont={"size": 9}, row=1, col=col_idx)
 
-    fig.update_layout(
-        barmode="group",
-        height=520,
-        margin={"l": 55, "r": 20, "t": 50, "b": 100},
-        plot_bgcolor="white", paper_bgcolor="white",
-        font={"family": "Georgia, serif", "size": 10},
-        legend={"orientation": "h", "y": 1.08, "font": {"size": 10}},
-    )
+    fig.update_layout(barmode="group", height=520,
+                      margin={"l":55,"r":20,"t":50,"b":100},
+                      plot_bgcolor="white", paper_bgcolor="white",
+                      font={"family":"Georgia, serif","size":10},
+                      legend={"orientation":"h","y":1.08,"font":{"size":10}})
     return fig
 
 
-# ── TAB 3: Sub-Period Heatmap ─────────────────────────────────────────────────
+# ── TAB 3: Sub-Period Heatmap (AR+LLM vs AR) ──────────────────────────────────
 def heatmap_tab():
     return html.Div([
         html.Div(style={"display": "flex", "gap": "16px", "flexWrap": "wrap",
@@ -372,15 +338,13 @@ def heatmap_tab():
                 inputStyle={"marginRight": "5px"},
                 labelStyle={"marginRight": "18px"},
             ),
-            html.Label("vs. baseline:", style={"fontWeight": "bold", "fontSize": "13px",
-                                               "marginLeft": "20px"}),
+            html.Label("Compare:", style={"fontWeight": "bold", "fontSize": "13px",
+                                          "marginLeft": "20px"}),
             dcc.RadioItems(
                 id="heat-metric",
-                options=[
-                    {"label": "BVAR",  "value": "bvar"},
-                    {"label": "AR(4)", "value": "ar"},
-                ],
-                value="bvar", inline=True,
+                options=[{"label": "AR+LLM vs AR",   "value": "ar"},
+                         {"label": "BVAR+LLM vs BVAR","value": "bvar"}],
+                value="ar", inline=True,
                 style={"fontSize": "13px"},
                 inputStyle={"marginRight": "5px"},
                 labelStyle={"marginRight": "18px"},
@@ -388,16 +352,13 @@ def heatmap_tab():
         ]),
         dcc.Graph(id="heat-chart", style={"height": "440px"},
                   config={"displayModeBar": False}),
-        html.P(
-            "Cell values = (BVAR+LLM RMSE - baseline RMSE) / baseline RMSE x 100. "
-            "Green = LLM improves accuracy; red = worsens. "
-            "Sub-periods: COVID (2020Q1-2021Q2), Inflation surge (2021Q3-2023Q2), "
-            "Soft landing (2023Q3-2024Q4).",
-            style={"fontSize": "11px", "color": "#888", "marginTop": "8px",
-                   "fontStyle": "italic"}
-        ),
+        html.P("Cell values = (model RMSE − baseline RMSE) / baseline RMSE × 100. "
+               "Green = LLM augmentation improves accuracy; red = worsens. "
+               "Sub-periods: COVID shock (2020Q1–2021Q2), "
+               "Inflation surge (2021Q3–2023Q2), Soft landing (2023Q3–2024Q4).",
+               style={"fontSize": "11px", "color": "#888", "marginTop": "8px",
+                      "fontStyle": "italic"}),
     ])
-
 
 @app.callback(
     Output("heat-chart", "figure"),
@@ -406,19 +367,26 @@ def heatmap_tab():
 )
 def update_heatmap(h, metric):
     periods  = ["COVID shock", "Inflation surge", "Soft landing"]
-    vars_ord = ["GDPC1_gr", "CPIAUCSL_yoy", "PCEPILFE_yoy", "UNRATE",
-                "FEDFUNDS", "T10Y2Y", "BAA10Y", "VIXCLS_log"]
-    labels   = [VAR_LABELS[v] for v in vars_ord]
-    baseline = "BVAR" if metric == "bvar" else "AR"
+    labels   = [VAR_LABELS[v] for v in KEEP]
 
-    matrix   = np.full((len(vars_ord), len(periods)), np.nan)
-    ann_text = [["" for _ in periods] for _ in vars_ord]
+    # Metric determines which model pair to compare
+    if metric == "ar":
+        llm_model  = "AR_LLM"
+        base_model = "AR"
+        title_lbl  = "AR+LLM vs AR"
+    else:
+        llm_model  = "BVAR_LLM"
+        base_model = "BVAR"
+        title_lbl  = "BVAR+LLM vs BVAR"
+
+    matrix   = np.full((len(KEEP), len(periods)), np.nan)
+    ann_text = [["" for _ in periods] for _ in KEEP]
 
     for j, period in enumerate(periods):
         psub      = sub_df[(sub_df["period"] == period) & (sub_df["horizon"] == h)]
-        base_rmse = psub[psub["model"] == baseline].set_index("variable")["rmse"]
-        llm_rmse  = psub[psub["model"] == "BVAR_LLM"].set_index("variable")["rmse"]
-        for i, v in enumerate(vars_ord):
+        base_rmse = psub[psub["model"] == base_model].set_index("variable")["rmse"]
+        llm_rmse  = psub[psub["model"] == llm_model].set_index("variable")["rmse"]
+        for i, v in enumerate(KEEP):
             if v in base_rmse.index and v in llm_rmse.index:
                 bv = float(base_rmse[v])
                 lm = float(llm_rmse[v])
@@ -429,48 +397,34 @@ def update_heatmap(h, metric):
 
     fig = go.Figure(go.Heatmap(
         z=matrix, x=periods, y=labels,
-        text=ann_text,
-        texttemplate="%{text}",
+        text=ann_text, texttemplate="%{text}",
         textfont={"size": 12, "family": "Georgia, serif"},
-        colorscale=[
-            [0.0,  "#1a8c4e"],
-            [0.45, "#d5f5e3"],
-            [0.5,  "#fdfefe"],
-            [0.55, "#fde8d8"],
-            [1.0,  "#c0392b"],
-        ],
+        colorscale=[[0.0,"#1a8c4e"],[0.45,"#d5f5e3"],
+                    [0.5,"#fdfefe"],[0.55,"#fde8d8"],[1.0,"#c0392b"]],
         zmid=0, zmin=-65, zmax=25,
-        colorbar={
-            "title": {"text": "% RMSE change", "font": {"size": 11}},
-            "tickfont": {"size": 9},
-            "thickness": 16,
-        },
+        colorbar={"title":{"text":"% RMSE change","font":{"size":11}},
+                  "tickfont":{"size":9},"thickness":16},
         hoverongaps=False,
         hovertemplate="<b>%{y}</b><br>%{x}<br>%{text}<extra></extra>",
     ))
 
     fig.update_layout(
-        title={
-            "text": f"BVAR+LLM vs {baseline} — RMSE change by sub-period (h={h})",
-            "font": {"size": 13, "family": "Georgia, serif"},
-            "x": 0.5, "xanchor": "center",
-        },
+        title={"text": f"{title_lbl} — RMSE change by sub-period (h={h})",
+               "font":{"size":13,"family":"Georgia, serif"},
+               "x":0.5,"xanchor":"center"},
         height=460,
-        margin={"l": 160, "r": 100, "t": 55, "b": 60},
-        font={"family": "Georgia, serif", "size": 10},
+        margin={"l":160,"r":100,"t":55,"b":60},
+        font={"family":"Georgia, serif","size":10},
         plot_bgcolor="white", paper_bgcolor="white",
     )
     return fig
 
 
-# ── Run ───────────────────────────────────────────────────────────────────────
+# ── Run ────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     print("\n" + "="*55)
     print("  Reading the Fed — Research Dashboard")
     print("  Open: http://127.0.0.1:8050")
     print("="*55 + "\n")
-    import os
-
-    #app.run(debug=False, port=8050)
-
-    app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 8050)))
+    app.run(debug=False, host="0.0.0.0",
+            port=int(os.environ.get("PORT", 8050)))
