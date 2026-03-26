@@ -5,3 +5,5 @@ __pycache__/
 .venv/
 cache/texts/
 .env
+# Allow results CSVs
+!outputs/*.csv
