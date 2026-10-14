@@ -1,0 +1,28 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Out-of-sample forecast accuracy, 2020Q1--2024Q4. Entries are RMSE ratios relative to AR$(p)$ baseline (ratio $<1$ = improvement, \textbf{bold}). *, **, *** denote significance at 10\%, 5\%, 1\% via Diebold-Mariano (1995) test with Harvey-Leybourne-Newbold (1997) small-sample correction.}
+\label{tab:main_results}
+\begin{tabular}{llrrrrrrrr}
+\toprule
+Variable & Horizon & AR_rmse & BVAR_rmse & BVAR_LLM_rmse & AR_LLM_rmse & AR_ratio & BVAR_ratio & BVAR_LLM_ratio & AR_LLM_ratio \\
+\midrule
+GDPC1_gr & h=1 & 9.861 & 18.227 & 18.146 & 9.890 & 1.000 & 1.848 & 1.840 & 1.003 \\
+GDPC1_gr & h=2 & 10.867 & 25.363 & 24.532 & 11.023 & 1.000 & 2.334 & 2.258 & 1.014 \\
+CPIAUCSL_yoy & h=1 & 3.723 & 3.564 & 3.540 & 3.016 & 1.000 & \textbf{0.957} & \textbf{0.951} & \textbf{0.810} \\
+CPIAUCSL_yoy & h=2 & 3.129 & 9.272 & 8.402 & 2.500 & 1.000 & 2.963 & 2.685 & \textbf{0.799} \\
+PCEPILFE_yoy & h=1 & 2.456 & 2.172 & 1.891 & 1.959 & 1.000 & \textbf{0.884} & \textbf{0.770} & \textbf{0.798} \\
+PCEPILFE_yoy & h=2 & 1.544 & 5.747 & 4.439 & 1.302 & 1.000 & 3.723 & 2.876 & \textbf{0.844} \\
+UNRATE & h=1 & 2.640 & 10.246 & 9.089 & 2.127 & 1.000 & 3.882 & 3.443 & \textbf{0.806} \\
+UNRATE & h=2 & 2.509 & 29.453 & 23.849 & 2.215 & 1.000 & 11.740 & 9.507 & \textbf{0.883} \\
+FEDFUNDS & h=1 & 2.651 & 0.863 & 0.798 & 2.412 & 1.000 & \textbf{0.325} & \textbf{0.301} & \textbf{0.910} \\
+FEDFUNDS & h=2 & 2.712 & 2.354 & 1.864 & 3.079 & 1.000 & \textbf{0.868} & \textbf{0.687} & 1.135 \\
+T10Y2Y & h=1 & 0.855 & 2.477 & 2.058 & 0.622 & 1.000 & 2.897 & 2.408 & \textbf{0.728} \\
+T10Y2Y & h=2 & 0.814 & 8.294 & 6.288 & 0.652 & 1.000 & 10.190 & 7.725 & \textbf{0.801} \\
+BAA10Y & h=1 & 0.748 & 2.974 & 2.708 & 0.810 & 1.000 & 3.975 & 3.619 & 1.082 \\
+BAA10Y & h=2 & 0.460 & 9.011 & 7.106 & 0.559 & 1.000 & 19.583 & 15.445 & 1.215 \\
+VIXCLS_log & h=1 & 0.441 & 3.226 & 2.893 & 0.483 & 1.000 & 7.319 & 6.565 & 1.096 \\
+VIXCLS_log & h=2 & 0.321 & 8.730 & 6.984 & 0.403 & 1.000 & 27.178 & 21.744 & 1.256 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": -0.5,
+    "std": 0.0,
+    "runs": [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "rationale": "Solid pace continues but weaker consumer spending, downside risks."
+  },
+  "inflation_concern": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Inflation somewhat elevated, tariffs boost upside risks significantly."
+  },
+  "labor_market": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Unemployment stabilized low, conditions solid, broadly balanced market."
+  },
+  "credit_conditions": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Credit broadly available, spreads widened but remain historically narrow."
+  },
+  "policy_uncertainty": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "High uncertainty around outlook, trade policy clouding forecasts."
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

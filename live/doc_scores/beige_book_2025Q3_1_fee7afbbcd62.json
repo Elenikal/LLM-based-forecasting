@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": -0.5,
+    "std": 0.0,
+    "runs": [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "rationale": "Most Districts reported little or no change; activity flat."
+  },
+  "inflation_concern": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Nearly all Districts noted tariff-related price increases; moderate growth."
+  },
+  "labor_market": {
+    "mean": -0.5,
+    "std": 0.0,
+    "runs": [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "rationale": "Eleven Districts little or no change; firms hesitant to hire."
+  },
+  "credit_conditions": {
+    "mean": 0.0,
+    "std": 0.0,
+    "runs": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "rationale": "Lending volumes held steady; slight loosening in some Districts."
+  },
+  "policy_uncertainty": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Contacts frequently cited economic uncertainty and tariffs as negative factors."
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

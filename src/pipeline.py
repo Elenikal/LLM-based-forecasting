@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from config import (
     EVAL_START, EVAL_END, ROLL_WINDOW, FORECAST_H,
     BVAR_LAGS, N_LLM_PCS, OUTPUT_DIR,
-    ANTHROPIC_API_KEY, FRED_API_KEY,
+    ANTHROPIC_API_KEY, FRED_API_KEY, COVID_DUMMIES,
     SCORE_DIMS, SCORE_DIR, RANDOM_SEED,
 )
 from data.fred_pull    import load_fred_data, get_bvar_system, get_rolling_window
@@ -147,14 +147,34 @@ def rolling_pca(score_df: pd.DataFrame, window_idx: pd.PeriodIndex,
 # Step 4 — Rolling-window forecast loop
 # ─────────────────────────────────────────────────────────────────────────────
 
+def covid_dummy_matrix(win_idx: pd.PeriodIndex) -> np.ndarray | None:
+    """Impulse dummies for the COVID quarters that fall inside the window."""
+    cols = [[float(str(q) == c) for q in win_idx] for c in COVID_DUMMIES]
+    cols = [c for c in cols if any(c)]
+    return np.array(cols).T if cols else None
+
+
+def _with(*blocks):
+    blocks = [b for b in blocks if b is not None]
+    return np.hstack(blocks) if blocks else None
+
+
 def run_rolling_forecasts(quant_df: pd.DataFrame,
-                          llm_scores: pd.DataFrame) -> tuple:
+                          llm_scores: pd.DataFrame,
+                          covid_dummies: bool = False,
+                          score_diff: bool = False) -> tuple:
     """
     Returns (forecasts dict, actuals dict, eval_quarters list).
 
     forecasts[model][variable][horizon] = list of T point forecasts
-    actuals[variable] = list of T realised values (h=1 target)
+    actuals[variable][horizon] = list of T realised values at the h-step
+                                 target quarter t+h-1 (window ends at t-1)
+
+    covid_dummies : add 2020Q2-Q4 impulse dummies to every model (0 out of sample)
+    score_diff    : feed first differences of the LLM scores instead of levels
     """
+    if score_diff:
+        llm_scores = llm_scores.diff().fillna(0.0)
     eval_quarters = list(
         pd.period_range(EVAL_START, EVAL_END, freq="Q").astype(str))
     var_names     = list(quant_df.columns)
@@ -162,7 +182,7 @@ def run_rolling_forecasts(quant_df: pd.DataFrame,
 
     forecasts = {m: {v: {h: [] for h in FORECAST_H} for v in var_names}
                  for m in MODEL_NAMES}
-    actuals   = {v: [] for v in var_names}
+    actuals   = {v: {h: [] for h in FORECAST_H} for v in var_names}
 
     n_origins = len(eval_quarters)
     print(f"\n  {n_origins} forecast origins  ×  "
@@ -184,17 +204,19 @@ def run_rolling_forecasts(quant_df: pd.DataFrame,
                     for h in FORECAST_H:
                         forecasts[m][v][h].append(np.nan)
             for v in var_names:
-                actuals[v].append(np.nan)
+                for h in FORECAST_H:
+                    actuals[v][h].append(np.nan)
             continue
 
         Y_win     = Y_win_df.values
         Y_win_idx = Y_win_df.index
 
-        # ── Record actual values (h=1 target) ──
-        target_h1 = t   # h=1 means forecasting t given info through t-1
+        # ── Record actual values: h-step forecast targets t+h-1 ──
         for v in var_names:
-            val = quant_df.loc[target_h1, v] if target_h1 in quant_df.index else np.nan
-            actuals[v].append(float(val))
+            for h in FORECAST_H:
+                target = t + (h - 1)
+                val = quant_df.loc[target, v] if target in quant_df.index else np.nan
+                actuals[v][h].append(float(val))
 
         # ── LLM PCs ──
         # ── Lenza-Primiceri (2022) / delta-score fix ──────────────────────────
@@ -203,21 +225,31 @@ def run_rolling_forecasts(quant_df: pd.DataFrame,
         # deltas only contribute signal when the Fed's tone is *changing*,
         # which is exactly when the text carries genuine new information.
         # This eliminates the soft-landing over-prediction problem.
-        llm_delta = llm_scores.diff().fillna(0.0)
         llm_pcs = rolling_pca(llm_scores, Y_win_idx, N_LLM_PCS)
         has_llm = llm_pcs.std() > 1e-6
+        dums    = covid_dummy_matrix(Y_win_idx) if covid_dummies else None
+        k_d     = 0 if dums is None else dums.shape[1]
+        H       = max(FORECAST_H)
+
+        def fut(pcs_last=None):
+            """Future exog: LLM PCs held at last value, dummies zero."""
+            parts = [] if pcs_last is None else [np.tile(pcs_last, (H, 1))]
+            if k_d:
+                parts.append(np.zeros((H, k_d)))
+            return np.hstack(parts) if parts else None
 
         # ── Model 1: AR(p) — per variable ──
         for vi, v in enumerate(var_names):
-            ar_fc = forecast_ar(fit_ar(Y_win[:, vi], p=BVAR_LAGS),
-                                h=max(FORECAST_H))
+            ar_fc = forecast_ar(fit_ar(Y_win[:, vi], p=BVAR_LAGS, exog=dums),
+                                h=H, future_exog=fut())
             for h in FORECAST_H:
                 forecasts["AR"][v][h].append(float(ar_fc[h - 1]))
 
         # ── Model 2: BVAR (no LLM) ──
         try:
-            res_bvar = estimate_bvar(Y_win, p=BVAR_LAGS, var_names=var_names)
-            fc_bvar  = forecast_bvar(res_bvar, h=max(FORECAST_H))
+            res_bvar = estimate_bvar(Y_win, p=BVAR_LAGS, exog=dums,
+                                     var_names=var_names)
+            fc_bvar  = forecast_bvar(res_bvar, h=H, future_exog=fut())
         except Exception as e:
             warnings.warn(f"BVAR failed at {t_str}: {e}")
             fc_bvar = None
@@ -231,10 +263,10 @@ def run_rolling_forecasts(quant_df: pd.DataFrame,
         if has_llm:
             try:
                 res_llm = estimate_bvar(Y_win, p=BVAR_LAGS,
-                                        exog=llm_pcs, var_names=var_names)
-                fut_exog = np.tile(llm_pcs[-1:, :], (max(FORECAST_H), 1))
-                fc_llm   = forecast_bvar(res_llm, h=max(FORECAST_H),
-                                         future_exog=fut_exog)
+                                        exog=_with(llm_pcs, dums),
+                                        var_names=var_names)
+                fc_llm   = forecast_bvar(res_llm, h=H,
+                                         future_exog=fut(llm_pcs[-1:, :]))
             except Exception as e:
                 warnings.warn(f"BVAR_LLM failed at {t_str}: {e}")
                 fc_llm = fc_bvar   # fall back to plain BVAR
@@ -249,14 +281,14 @@ def run_rolling_forecasts(quant_df: pd.DataFrame,
         # ── Model 4: AR + LLM PCs (per variable) ──
         for vi, v in enumerate(var_names):
             if has_llm:
-                ar_llm_fit = fit_ar(Y_win[:, vi], p=BVAR_LAGS, exog=llm_pcs)
-                fut_exog_ar = np.tile(llm_pcs[-1:, :], (max(FORECAST_H), 1))
-                ar_llm_fc  = forecast_ar(ar_llm_fit, h=max(FORECAST_H),
-                                          future_exog=fut_exog_ar)
+                ar_llm_fit = fit_ar(Y_win[:, vi], p=BVAR_LAGS,
+                                    exog=_with(llm_pcs, dums))
+                ar_llm_fc  = forecast_ar(ar_llm_fit, h=H,
+                                         future_exog=fut(llm_pcs[-1:, :]))
             else:
                 # Fall back to plain AR if no LLM scores available
-                ar_llm_fc = forecast_ar(fit_ar(Y_win[:, vi], p=BVAR_LAGS),
-                                        h=max(FORECAST_H))
+                ar_llm_fc = forecast_ar(fit_ar(Y_win[:, vi], p=BVAR_LAGS, exog=dums),
+                                        h=H, future_exog=fut())
             for h in FORECAST_H:
                 forecasts["AR_LLM"][v][h].append(float(ar_llm_fc[h - 1]))
 
@@ -275,17 +307,19 @@ def run_rolling_forecasts(quant_df: pd.DataFrame,
 # Step 5 — Evaluate and export
 # ─────────────────────────────────────────────────────────────────────────────
 
-def evaluate_and_export(forecasts, actuals, eval_quarters, var_names):
+def evaluate_and_export(forecasts, actuals, eval_quarters, var_names,
+                        suffix: str = ""):
     print("\n── Evaluation ────────────────────────────────────────────────")
 
     fc_arr  = {m: {v: {h: np.array(forecasts[m][v][h]) for h in FORECAST_H}
                    for v in var_names} for m in forecasts}
-    act_arr = {v: np.array(actuals[v]) for v in var_names}
+    act_arr = {v: {h: np.array(actuals[v][h]) for h in FORECAST_H}
+               for v in var_names}
 
     # Main table
     main_tbl = build_results_table(fc_arr, act_arr, var_names, FORECAST_H,
                                    baseline_model="AR")
-    main_tbl.to_csv(OUTPUT_DIR / "results_main.csv")
+    main_tbl.to_csv(OUTPUT_DIR / f"results_main{suffix}.csv")
 
     # Console summary
     hdr = f"\n  {'Variable':18s} {'h':>2}  {'AR RMSE':>8}  {'BVAR/AR':>8}  {'LLM/AR':>8}  {'AR+LLM/AR':>10}  {'DM':>5}"
@@ -311,7 +345,7 @@ def evaluate_and_export(forecasts, actuals, eval_quarters, var_names):
                 for h, r in vdata.items():
                     sub_rows.append({"period": period, "model": model,
                                      "variable": var, "horizon": h, "rmse": r})
-    pd.DataFrame(sub_rows).to_csv(OUTPUT_DIR / "results_subperiod.csv", index=False)
+    pd.DataFrame(sub_rows).to_csv(OUTPUT_DIR / f"results_subperiod{suffix}.csv", index=False)
 
     # LLM scores data appendix (already saved in prepare_llm_scores)
 
@@ -326,7 +360,7 @@ def evaluate_and_export(forecasts, actuals, eval_quarters, var_names):
                  r"test with Harvey-Leybourne-Newbold (1997) small-sample correction."),
         label="tab:main_results",
     )
-    (OUTPUT_DIR / "results_main.tex").write_text(tex)
+    (OUTPUT_DIR / f"results_main{suffix}.tex").write_text(tex)
 
     print(f"\n  Outputs written to: {OUTPUT_DIR}")
     print("    results_main.csv       — full RMSE / DM table")
@@ -341,7 +375,8 @@ def evaluate_and_export(forecasts, actuals, eval_quarters, var_names):
 # Main
 # ─────────────────────────────────────────────────────────────────────────────
 
-def main(demo: bool = True, use_cache: bool = True):
+def main(demo: bool = True, use_cache: bool = True,
+         covid_dummies: bool = False, score_diff: bool = False):
     print("\n" + "=" * 65)
     print("  LLM-Augmented Forecasting of U.S. GDP and Financial Indicators")
     print(f"  Mode: {'DEMO (synthetic data)' if demo else 'LIVE (real data)'}")
@@ -362,10 +397,13 @@ def main(demo: bool = True, use_cache: bool = True):
     print(f"  {llm_scores.shape[1]} score columns  ×  {len(llm_scores)} quarters")
 
     print("\n── Step 3: Rolling-window forecasts ──────────────────────────")
-    forecasts, actuals, eval_quarters = run_rolling_forecasts(quant_df, llm_scores)
+    forecasts, actuals, eval_quarters = run_rolling_forecasts(
+        quant_df, llm_scores, covid_dummies=covid_dummies, score_diff=score_diff)
+    suffix = ("_covid" if covid_dummies else "") + ("_diff" if score_diff else "")
 
 
     print("\n── Step 4: Evaluation & export ───────────────────────────────")
-    evaluate_and_export(forecasts, actuals, eval_quarters, list(quant_df.columns))
+    evaluate_and_export(forecasts, actuals, eval_quarters, list(quant_df.columns),
+                        suffix=suffix)
 
     print("\n  Done. ✓\n")

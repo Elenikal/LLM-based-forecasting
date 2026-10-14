@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": -0.5,
+    "std": 0.0,
+    "runs": [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "rationale": "Activity changed little, slight softening in four Districts"
+  },
+  "inflation_concern": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Prices rose further, tariff-induced cost increases widely reported"
+  },
+  "labor_market": {
+    "mean": -0.5,
+    "std": 0.0,
+    "runs": [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "rationale": "Employment stable but layoffs increased, labor demand muted"
+  },
+  "credit_conditions": {
+    "mean": 0.0,
+    "std": 0.0,
+    "runs": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "rationale": "Mixed conditions, some improved lending, other reports muted"
+  },
+  "policy_uncertainty": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Elevated uncertainty repeatedly cited, weighing down activity expectations"
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

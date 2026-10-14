@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Activity increased modestly; ten Districts reported slight to moderate growth."
+  },
+  "inflation_concern": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Prices increased moderately; elevated energy, transportation, raw material cost pressures."
+  },
+  "labor_market": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Employment rose very slightly; healthy demand in manufacturing and construction."
+  },
+  "credit_conditions": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Financial conditions improved slightly; loan volumes remained solid or increased."
+  },
+  "policy_uncertainty": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Heightened uncertainty surrounding energy prices, policy, and international conflict effects."
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

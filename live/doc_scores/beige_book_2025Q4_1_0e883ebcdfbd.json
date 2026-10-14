@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": -1.0,
+    "std": 0.0,
+    "runs": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "rationale": "Activity little changed, modest declines reported, slower activity expected"
+  },
+  "inflation_concern": {
+    "mean": 1.3333333333333333,
+    "std": 0.23570226039551584,
+    "runs": [
+      1.5,
+      1.5,
+      1.0
+    ],
+    "rationale": "Prices rose moderately, widespread tariff-induced cost pressures, upward pressures persist"
+  },
+  "labor_market": {
+    "mean": -0.5,
+    "std": 0.0,
+    "runs": [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "rationale": "Employment declined slightly, weaker labor demand, easier finding workers"
+  },
+  "credit_conditions": {
+    "mean": -0.5,
+    "std": 0.0,
+    "runs": [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "rationale": "Loan demand mixed to down, margin compression, financial strain"
+  },
+  "policy_uncertainty": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Tariff uncertainty headwind, heightened uncertainty cited, mixed outlooks ahead"
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

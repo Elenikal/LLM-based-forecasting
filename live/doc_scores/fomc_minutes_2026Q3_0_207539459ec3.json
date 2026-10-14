@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": 1.1666666666666667,
+    "std": 0.23570226039551584,
+    "runs": [
+      1.0,
+      1.0,
+      1.5
+    ],
+    "rationale": "Economic activity expanding at solid pace, strong investment."
+  },
+  "inflation_concern": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Inflation remains elevated, risks skewed upside, persistent concerns."
+  },
+  "labor_market": {
+    "mean": 0.6666666666666666,
+    "std": 0.23570226039551584,
+    "runs": [
+      0.5,
+      0.5,
+      1.0
+    ],
+    "rationale": "Labor market stable, demand and supply in balance."
+  },
+  "credit_conditions": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Financial conditions supporting demand, some vulnerabilities noted."
+  },
+  "policy_uncertainty": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Highly uncertain inflation outlook, split vote, awaiting clarity."
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

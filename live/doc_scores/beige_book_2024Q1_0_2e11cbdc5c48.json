@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": -0.5,
+    "std": 0.0,
+    "runs": [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "rationale": "Majority reported little or no change; modest declines noted."
+  },
+  "inflation_concern": {
+    "mean": -1.0,
+    "std": 0.0,
+    "runs": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "rationale": "Price increases subsided; easing pressures; consumer price sensitivity increased."
+  },
+  "labor_market": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Cooling but solid; larger applicant pools; easing wage pressures."
+  },
+  "credit_conditions": {
+    "mean": -1.0,
+    "std": 0.0,
+    "runs": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "rationale": "High cost and reduced availability; declining loan demand cited."
+  },
+  "policy_uncertainty": {
+    "mean": 0.8333333333333334,
+    "std": 0.23570226039551584,
+    "runs": [
+      1.0,
+      1.0,
+      0.5
+    ],
+    "rationale": "Concerns about office market, demand, political cycle cited frequently."
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

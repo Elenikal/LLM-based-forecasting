@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Activity expanding at solid pace, robust investment, resilient spending."
+  },
+  "inflation_concern": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Inflation elevated, vast majority see increased risk, longer return."
+  },
+  "labor_market": {
+    "mean": -0.5,
+    "std": 0.0,
+    "runs": [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "rationale": "Job gains low, risks tilted downside, signs of softness."
+  },
+  "credit_conditions": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Financial conditions supporting growth, elevated asset valuations, private credit concerns."
+  },
+  "policy_uncertainty": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "High uncertainty from Middle East conflict, meeting-by-meeting decisions emphasized."
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

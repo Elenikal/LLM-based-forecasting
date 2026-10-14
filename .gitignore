@@ -7,3 +7,6 @@ cache/texts/
 .env
 # Allow results CSVs
 !outputs/*.csv
+.venv-arm/
+.DS_Store
+

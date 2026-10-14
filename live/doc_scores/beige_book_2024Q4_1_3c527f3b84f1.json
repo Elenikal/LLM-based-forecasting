@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Activity rose slightly in most Districts, modest growth expected."
+  },
+  "inflation_concern": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Prices rose modestly, tariffs pose significant upside inflation risk."
+  },
+  "labor_market": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Employment flat or up slightly, wage growth softened to modest."
+  },
+  "credit_conditions": {
+    "mean": 0.0,
+    "std": 0.0,
+    "runs": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "rationale": "Financing remained available, loan demand relatively flat, conditions stable."
+  },
+  "policy_uncertainty": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Elevated uncertainty about economy, tariffs, and future policy changes."
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": 1.3333333333333333,
+    "std": 0.23570226039551584,
+    "runs": [
+      1.5,
+      1.0,
+      1.5
+    ],
+    "rationale": "Economy expanding at solid pace, resilient consumer spending"
+  },
+  "inflation_concern": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Inflation remains somewhat elevated, risk of persistent inflation"
+  },
+  "labor_market": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Unemployment stabilizing, job gains low, conditions showing stabilization"
+  },
+  "credit_conditions": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Credit generally available, spreads low, conditions favorable overall"
+  },
+  "policy_uncertainty": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Uncertainty about outlook remains elevated, policy not preset"
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

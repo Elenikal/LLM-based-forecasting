@@ -43,6 +43,10 @@ parser.add_argument("--use-cache", action="store_true", default=True,
                     help="Use cached FRED data and LLM scores if available (default: True)")
 parser.add_argument("--no-cache", dest="use_cache", action="store_false",
                     help="Force re-download of all data and re-score all documents")
+parser.add_argument("--covid-dummies", action="store_true",
+                    help="Robustness: 2020Q2-Q4 impulse dummies in every model")
+parser.add_argument("--score-diff", action="store_true",
+                    help="Robustness: first differences of LLM scores instead of levels")
 args = parser.parse_args()
 
 # ── Key checks before doing anything expensive ───────────────────────────────
@@ -82,4 +86,5 @@ if args.live:
 # ── Import and run ────────────────────────────────────────────────────────────
 from pipeline import main
 
-main(demo=args.demo, use_cache=args.use_cache)
+main(demo=args.demo, use_cache=args.use_cache,
+     covid_dummies=args.covid_dummies, score_diff=args.score_diff)

@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Activity expanding at solid pace, robust investment, resilient spending"
+  },
+  "inflation_concern": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Inflation remained elevated, risks skewed to upside, concerns persisting"
+  },
+  "labor_market": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Close to maximum employment, stable conditions, some strengthening signs"
+  },
+  "credit_conditions": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Credit broadly available, supportive financial conditions despite yield rises"
+  },
+  "policy_uncertainty": {
+    "mean": -0.8333333333333334,
+    "std": 0.23570226039551584,
+    "runs": [
+      -0.5,
+      -1.0,
+      -1.0
+    ],
+    "rationale": "Most assess another increase likely by year end"
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

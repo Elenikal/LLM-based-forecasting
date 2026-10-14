@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": -1.0,
+    "std": 0.0,
+    "runs": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "rationale": "GDP declined slightly; downside risks risen; recession almost likely"
+  },
+  "inflation_concern": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Inflation somewhat elevated; tariffs boost inflation; upside risks risen"
+  },
+  "labor_market": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Conditions solid; unemployment stabilized low; risk of weakening ahead"
+  },
+  "credit_conditions": {
+    "mean": -0.5,
+    "std": 0.0,
+    "runs": [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "rationale": "Credit spreads widened; borrowing costs increased; financing less available"
+  },
+  "policy_uncertainty": {
+    "mean": 2.0,
+    "std": 0.0,
+    "runs": [
+      2.0,
+      2.0,
+      2.0
+    ],
+    "rationale": "Uncertainty unusually elevated; considerable uncertainty surrounding trade policy outlook"
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

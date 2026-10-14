@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": -0.5,
+    "std": 0.0,
+    "runs": [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "rationale": "Slight to modest growth majority; five Districts flat/declining activity."
+  },
+  "inflation_concern": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Prices rose modestly; input costs stabilizing; some discounting noted."
+  },
+  "labor_market": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Employment rose slightly; improved labor supply; skilled-worker availability challenge."
+  },
+  "credit_conditions": {
+    "mean": -1.0,
+    "std": 0.0,
+    "runs": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "rationale": "Soft demand for loans; high interest rates restrained activity."
+  },
+  "policy_uncertainty": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Elevated uncertainty around election, domestic policy, geopolitical conflict, inflation."
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

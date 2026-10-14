@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Economic activity expanding at solid pace, growth solid."
+  },
+  "inflation_concern": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Inflation somewhat elevated, upside risks noted but diminished."
+  },
+  "labor_market": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Unemployment low, labor market conditions solid and stable."
+  },
+  "credit_conditions": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Credit readily accessible, spreads narrowed, conditions stable overall."
+  },
+  "policy_uncertainty": {
+    "mean": 0.8333333333333334,
+    "std": 0.23570226039551584,
+    "runs": [
+      1.0,
+      0.5,
+      1.0
+    ],
+    "rationale": "Uncertainty diminished but remains elevated, careful approach emphasized."
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

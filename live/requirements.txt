@@ -1,0 +1,3 @@
+-r ../requirements.txt
+# 1.x drops the temperature argument the paper's scorer uses (T=0.3)
+anthropic==0.86.0

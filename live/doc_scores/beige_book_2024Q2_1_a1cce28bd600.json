@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Slight expansion overall, but outlooks grew more pessimistic."
+  },
+  "inflation_concern": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Modest price increases; consumers pushed back against further increases."
+  },
+  "labor_market": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Better labor availability, decreased turnover, increased employer bargaining power."
+  },
+  "credit_conditions": {
+    "mean": -1.1666666666666667,
+    "std": 0.23570226039551584,
+    "runs": [
+      -1.5,
+      -1.0,
+      -1.0
+    ],
+    "rationale": "Tight credit standards and high interest rates constrained lending."
+  },
+  "policy_uncertainty": {
+    "mean": 1.3333333333333333,
+    "std": 0.23570226039551584,
+    "runs": [
+      1.5,
+      1.5,
+      1.0
+    ],
+    "rationale": "Rising uncertainty, greater downside risks, uncertain economic environment cited."
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

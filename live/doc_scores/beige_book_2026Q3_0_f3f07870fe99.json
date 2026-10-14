@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Activity increased slight to moderate pace in eleven Districts."
+  },
+  "inflation_concern": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Prices increased moderately overall; robust growth in two Districts."
+  },
+  "labor_market": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Employment rose on balance; five Districts showed modest gains."
+  },
+  "credit_conditions": {
+    "mean": 0.16666666666666666,
+    "std": 0.23570226039551584,
+    "runs": [
+      0.5,
+      0.0,
+      0.0
+    ],
+    "rationale": "Financial conditions stable; loan volumes up modestly overall."
+  },
+  "policy_uncertainty": {
+    "mean": 1.0,
+    "std": 0.0,
+    "runs": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rationale": "Several Districts noted elevated uncertainty about fuel cost outlook."
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

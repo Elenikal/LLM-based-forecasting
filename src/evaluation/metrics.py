@@ -133,6 +133,13 @@ def diebold_mariano(actual: np.ndarray, fc1: np.ndarray, fc2: np.ndarray,
 # Results table construction
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _act(actuals: dict, var: str, h: int):
+    """Realised values for (var, h). Accepts {var: {h: arr}} (each horizon
+    scored against its own target quarter) or the older {var: arr}."""
+    a = actuals.get(var)
+    return a.get(h) if isinstance(a, dict) else a
+
+
 def build_results_table(forecasts: dict, actuals: dict,
                         target_vars: list, horizons: list,
                         baseline_model: str = "AR") -> pd.DataFrame:
@@ -142,7 +149,7 @@ def build_results_table(forecasts: dict, actuals: dict,
     Parameters
     ----------
     forecasts : {model_name: {target: {horizon: np.ndarray}}}
-    actuals   : {target: np.ndarray}
+    actuals   : {target: {horizon: np.ndarray}}  (or {target: np.ndarray})
     target_vars : list of variable names
     horizons    : list of forecast horizons
     baseline_model : name of the model to use as RMSE denominator
@@ -155,10 +162,10 @@ def build_results_table(forecasts: dict, actuals: dict,
     models = list(forecasts.keys())
 
     for var in target_vars:
-        act = actuals.get(var)
-        if act is None:
+        if actuals.get(var) is None:
             continue
         for h in horizons:
+            act = _act(actuals, var, h)
             row = {"variable": var, "horizon": h}
             baseline_rmse_val = None
 
@@ -240,10 +247,10 @@ def sub_period_results(forecasts: dict, actuals: dict,
             period_rmse[model] = {}
             for var in target_vars:
                 period_rmse[model][var] = {}
-                act = actuals.get(var)
-                if act is None:
+                if actuals.get(var) is None:
                     continue
                 for h in horizons:
+                    act = _act(actuals, var, h)
                     fc = model_fc.get(var, {}).get(h)
                     if fc is None:
                         continue

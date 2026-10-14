@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": -0.5,
+    "std": 0.0,
+    "runs": [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "rationale": "Activity increased slightly but outlook neutral to slightly pessimistic"
+  },
+  "inflation_concern": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Widespread tariff cost pressures, prices expected to rise more rapidly"
+  },
+  "labor_market": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Employment increased very slightly, labor availability improved, hiring cautious"
+  },
+  "credit_conditions": {
+    "mean": 0.0,
+    "std": 0.0,
+    "runs": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "rationale": "Loan volume increased slightly, credit standards easing, demand weakening"
+  },
+  "policy_uncertainty": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Uncertainty remained elevated, businesses postponing decisions until uncertainty diminishes"
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": -1.0,
+    "std": 0.0,
+    "runs": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "rationale": "Activity 'little changed' to 'slight/modest declines' across Districts"
+  },
+  "inflation_concern": {
+    "mean": 1.5,
+    "std": 0.0,
+    "runs": [
+      1.5,
+      1.5,
+      1.5
+    ],
+    "rationale": "Widespread tariff concerns, 'elevated input cost growth,' passthrough expected"
+  },
+  "labor_market": {
+    "mean": 0.0,
+    "std": 0.0,
+    "runs": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "rationale": "Employment 'little changed to up slightly,' hiring pauses reported"
+  },
+  "credit_conditions": {
+    "mean": -0.5,
+    "std": 0.0,
+    "runs": [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "rationale": "Loan demand 'flat to modestly higher,' investment pullback noted"
+  },
+  "policy_uncertainty": {
+    "mean": 2.0,
+    "std": 0.0,
+    "runs": [
+      2.0,
+      2.0,
+      2.0
+    ],
+    "rationale": "Pervasive uncertainty, 'wait-and-see approach,' outlooks 'worsened considerably'"
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}

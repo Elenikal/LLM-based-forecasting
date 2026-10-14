@@ -39,6 +39,8 @@ BVAR_LAMBDA3 = 1.0
 # Observation variance scaled by V for COVID quarters → downweight by 1/sqrt(V)
 OUTLIER_SCALE   = 100.0            # scale factor (Lenza-Primiceri use ~100)
 COVID_OUTLIERS  = ["2020Q1", "2020Q2"]  # quarters treated as outliers
+# Robustness (--covid-dummies): impulse dummies in every model, 0 out of sample
+COVID_DUMMIES   = ["2020Q2", "2020Q3", "2020Q4"]
 N_LLM_PCS    = 3
 
 # ── LLM scoring ───────────────────────────────────────────────────────────────

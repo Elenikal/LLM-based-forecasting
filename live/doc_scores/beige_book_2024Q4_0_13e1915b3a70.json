@@ -1,0 +1,54 @@
+{
+  "growth_expectations": {
+    "mean": -0.5,
+    "std": 0.0,
+    "runs": [
+      -0.5,
+      -0.5,
+      -0.5
+    ],
+    "rationale": "Activity 'little changed' or 'flat' in most Districts"
+  },
+  "inflation_concern": {
+    "mean": -1.0,
+    "std": 0.0,
+    "runs": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "rationale": "Inflation 'continued to moderate' with 'slight or modest' increases"
+  },
+  "labor_market": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Employment 'increased slightly', worker availability improved, turnover low"
+  },
+  "credit_conditions": {
+    "mean": 0.5,
+    "std": 0.0,
+    "runs": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "rationale": "Loan demand 'mixed' but 'improvement in outlook' from rate declines"
+  },
+  "policy_uncertainty": {
+    "mean": 1.3333333333333333,
+    "std": 0.23570226039551584,
+    "runs": [
+      1.5,
+      1.5,
+      1.0
+    ],
+    "rationale": "Contacts noted 'elevated uncertainty' and 'hesitancy' around election outcomes"
+  },
+  "reliability_ok": true,
+  "n_runs_succeeded": 3
+}
