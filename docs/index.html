@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reading the Fed</title>
+<meta name="description" content="Central bank text as a forecasting signal: a public, timestamped out-of-sample forecast record and the paper's backtest results.">
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f6f9; --card: #ffffff; --ink: #1b1b1b; --ink-2: #555; --ink-3: #888;
+    --rule: #e3e6ea; --blue: #1a4e8c; --green: #0f6e56; --purple: #7d3c98;
+    --amber: #d68910; --red: #c0392b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font-family: Georgia, "Times New Roman", serif; }
+  header { background: linear-gradient(135deg, #1a4e8c 0%, #0f6e56 100%);
+           padding: 28px 40px 22px; color: #fff; }
+  header h1 { margin: 0 0 4px; font-size: 30px; }
+  header .sub { margin: 0; font-style: italic; color: rgba(255,255,255,.85); font-size: 14px; }
+  header .meta { margin: 6px 0 0; font-size: 12px; color: rgba(255,255,255,.7); }
+  header a { color: #fff; }
+  main { max-width: 1360px; margin: 0 auto; padding: 28px 28px 50px; }
+  .card { background: var(--card); border-radius: 10px; padding: 20px 24px;
+          box-shadow: 0 1px 6px rgba(0,0,0,.08); margin-bottom: 20px; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi { padding: 16px 20px; margin: 0; border-top: 4px solid var(--c); }
+  .kpi .v { font-size: 26px; font-weight: bold; color: var(--c); line-height: 1.1; }
+  .kpi .l { font-size: 12px; color: var(--ink-2); margin-top: 4px; line-height: 1.4; }
+  .tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid #dee2e6; }
+  .tabs button { font: 13px Georgia, serif; background: #f9fafb; color: var(--ink-2);
+                 border: 1px solid #dee2e6; border-bottom: none; padding: 10px 18px;
+                 margin-right: -1px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: #fff; color: var(--blue);
+                 border-top: 3px solid var(--blue); font-weight: bold; }
+  .panel { display: none; margin-top: 16px; }
+  .panel.on { display: block; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center;
+              margin-bottom: 14px; font-size: 13px; }
+  .controls b { margin-right: 4px; }
+  .controls label { margin-right: 10px; cursor: pointer; }
+  .note { font-size: 11.5px; color: var(--ink-3); font-style: italic; margin-top: 8px; line-height: 1.5; }
+  .proof { font-size: 12.5px; color: var(--ink-2); line-height: 1.6; }
+  .proof code { font-size: 11px; word-break: break-all; }
+  .grid-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 8px 18px; }
+  .grid-charts > div { min-width: 0; width: 100%; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th { text-align: right; font-weight: normal; color: var(--ink-3); font-size: 12px;
+       border-bottom: 1px solid #999; padding: 6px 8px; white-space: nowrap; }
+  th:first-child, td:first-child, th.l, td.l { text-align: left; }
+  td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  td.call { color: var(--blue); font-weight: bold; }
+  tr.group td { color: var(--ink-3); font-size: 11.5px; font-style: italic; text-align: left;
+                border-bottom: none; padding-top: 14px; }
+  tr.muted td { color: var(--ink-3); }
+  tr.muted td.call { color: #7d98bd; }
+  .tablewrap { overflow-x: auto; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11.5px; }
+  .pill.win { background: #e3f4ec; color: var(--green); }
+  .pill.loss { background: #fbe7e5; color: var(--red); }
+  .pill.wait { background: #f0f1f3; color: var(--ink-3); }
+  .method p, .method li { font-size: 14px; line-height: 1.65; max-width: 860px; }
+  select { font: 13px Georgia, serif; padding: 3px 6px; }
+  footer { text-align: center; font-size: 12px; color: var(--ink-3); padding: 10px 0 30px; }
+  footer a { color: var(--ink-3); }
+  @media (max-width: 760px) {
+    header { padding: 22px 16px 18px; } main { padding: 18px 16px 40px; }
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .grid-charts { grid-template-columns: 1fr; }
+    .card { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Reading the Fed</h1>
+  <p class="sub">Central Bank Text as a Forecasting Signal</p>
+  <p class="meta">FOMC minutes + Beige Books → Claude → AR / BVAR &nbsp;|&nbsp;
+    Public out-of-sample record since October 2026 &nbsp;|&nbsp;
+    <a id="repo-link" href="#">Code and data</a></p>
+</header>
+
+<main>
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="live" aria-selected="true">Live record</button>
+      <button role="tab" data-tab="scores" aria-selected="false">LLM scores over time</button>
+      <button role="tab" data-tab="rmse" aria-selected="false">RMSE comparison</button>
+      <button role="tab" data-tab="heat" aria-selected="false">Sub-period heatmap</button>
+      <button role="tab" data-tab="method" aria-selected="false">Method</button>
+    </div>
+
+    <!-- Live record -->
+    <section class="panel on" id="tab-live">
+      <div class="controls">
+        <b>Forecast issued:</b> <select id="issue"></select>
+        <span class="proof" id="proof"></span>
+      </div>
+      <div class="grid-charts" id="live-charts"></div>
+      <p class="note">Line: published data (current vintage). Blue dot and bar: AR+LLM call with its
+        68% range. Grey ring: AR without the text. Diamond: outside forecast available on the issue
+        date. Calls are graded against first-release data once published.</p>
+      <div class="tablewrap" style="margin-top:14px"><table id="live-table"></table></div>
+    </section>
+
+    <!-- LLM scores -->
+    <section class="panel" id="tab-scores">
+      <div class="controls">
+        <b>Source:</b>
+        <label><input type="radio" name="src" value="fomc" checked> FOMC minutes</label>
+        <label><input type="radio" name="src" value="bb"> Beige Book</label>
+        <label><input type="radio" name="src" value="both"> Both</label>
+      </div>
+      <div id="scores-chart" style="height:640px"></div>
+      <p class="note">Claude scores each document on a −2 to +2 scale. 2007Q4–2024Q4 are the paper's
+        scores (frozen); later quarters are scored with the same prompt and settings for the live record.</p>
+    </section>
+
+    <!-- RMSE -->
+    <section class="panel" id="tab-rmse">
+      <div class="controls">
+        <b>Horizon:</b>
+        <label><input type="radio" name="rh" value="1"> h = 1</label>
+        <label><input type="radio" name="rh" value="2"> h = 2</label>
+        <label><input type="radio" name="rh" value="0" checked> Both</label>
+        <b style="margin-left:14px">Specification:</b>
+        <label><input type="radio" name="rs" value="main" checked> Paper baseline</label>
+        <label><input type="radio" name="rs" value="covid"> COVID dummies (live spec)</label>
+      </div>
+      <div id="rmse-chart" style="height:520px"></div>
+      <p class="note">RMSE ratios vs the AR(4) baseline, out-of-sample 2020Q1–2024Q4. Grey = AR (1.0),
+        blue = BVAR, green = BVAR+LLM, purple = AR+LLM (light purple = does not beat AR). Stars:
+        Diebold–Mariano test, purple = AR+LLM vs AR, red = BVAR+LLM vs BVAR.</p>
+    </section>
+
+    <!-- Heatmap -->
+    <section class="panel" id="tab-heat">
+      <div class="controls">
+        <b>Horizon:</b>
+        <label><input type="radio" name="hh" value="1" checked> h = 1</label>
+        <label><input type="radio" name="hh" value="2"> h = 2</label>
+        <b style="margin-left:14px">Compare:</b>
+        <label><input type="radio" name="hm" value="ar" checked> AR+LLM vs AR</label>
+        <label><input type="radio" name="hm" value="bvar"> BVAR+LLM vs BVAR</label>
+      </div>
+      <div id="heat-chart" style="height:460px"></div>
+      <p class="note">Cell = (model RMSE − baseline RMSE) / baseline RMSE × 100. Green = the text
+        improves accuracy, red = worsens. COVID shock 2020Q1–2021Q2, inflation surge 2021Q3–2023Q2,
+        soft landing 2023Q3–2024Q4.</p>
+    </section>
+
+    <!-- Method -->
+    <section class="panel method" id="tab-method">
+      <p><b>Reading, not forecasting.</b> Claude reads each set of FOMC minutes and each Beige Book and
+        scores five dimensions (growth, inflation concern, labor market, credit conditions, policy
+        uncertainty) from −2 to +2, treating the document as undated. Three rolling principal
+        components of the ten scores enter an AR(4) and a Bayesian VAR as exogenous regressors.
+        All numerical prediction is done by the time-series models.</p>
+      <p><b>Backtest.</b> 20 rolling origins, 2020Q1–2024Q4, 40-quarter windows. The h-step forecast is
+        scored against the value at t+h−1. The March 2026 version of the paper scored both horizons
+        against the value at t; the corrected results are shown here and the originals are kept in
+        <code>outputs/paper_v1_march2026/</code>.</p>
+      <p><b>Live record.</b> Issued once per FOMC cycle, before the decision. Each forecast file is
+        committed and tagged on GitHub before any outcome is known, and is never edited afterwards.
+        Outcomes are first-release values (ALFRED vintages), not revised data.</p>
+      <ul>
+        <li>Live specification: the paper's AR(4) and AR(4)+LLM, plus impulse dummies for 2020Q2–Q4,
+          declared before the first issue. Under that specification the backtest gives 9 of 12 wins.</li>
+        <li>Headline variables (declared 2026-10-14): CPI, core PCE, unemployment, fed funds and the
+          10Y–2Y spread. GDP is still forecast and graded, but not headlined.</li>
+        <li>Scorer: <code>claude-sonnet-4-5</code>, temperature 0.3, three runs per document. The model
+          retires on 2026-11-30; the switch to its successor will be logged in the repository.</li>
+        <li>Outside forecasts (SPF, GDPNow, Cleveland Fed nowcast, fed funds futures) are recorded on the
+          issue date with their definitions and graded against the same first releases.</li>
+      </ul>
+      <p><a id="paper-link" href="#">Paper (revised October 2026)</a> &nbsp;·&nbsp;
+         Eleni Kalamara, King's College London. Views are the author's own.</p>
+    </section>
+  </div>
+</main>
+<footer>Built <span id="built"></span> from <a id="repo-foot" href="#">the repository</a>.</footer>
+
+<script>
+const C = { blue:"#1a4e8c", green:"#0f6e56", purple:"#7d3c98", amber:"#d68910", red:"#c0392b",
+            grey:"#aaaaaa", ink:"#1b1b1b", ink2:"#555", ink3:"#888" };
+const FONT = { family: "Georgia, serif", size: 11, color: "#333" };
+const CFG = { displayModeBar: false, responsive: true };
+const SHORT = { GDPC1_gr:"Real GDP growth", CPIAUCSL_yoy:"CPI inflation", PCEPILFE_yoy:"Core PCE inflation",
+                UNRATE:"Unemployment rate", FEDFUNDS:"Fed funds rate", T10Y2Y:"10Y–2Y spread" };
+const UNIT = { GDPC1_gr:"% q/q saar", CPIAUCSL_yoy:"% y/y", PCEPILFE_yoy:"% y/y",
+               UNRATE:"%", FEDFUNDS:"% effective", T10Y2Y:"pp" };
+const BENCH_SHORT = s => s.startsWith("Atlanta") ? "GDPNow" : s.startsWith("Cleveland") ? "Cleveland Fed"
+                    : s.startsWith("Fed funds futures") ? "Futures" : s.startsWith("SPF") ? "SPF" : s;
+const q2n = q => { const [y, k] = q.split("Q"); return +y + (+k - 1) / 4; };
+const fmt = (v, d=2) => v == null ? "–" : (+v).toFixed(d);
+const $ = id => document.getElementById(id);
+const radio = n => document.querySelector(`input[name="${n}"]:checked`).value;
+let D;
+
+fetch("data/site.json").then(r => r.json()).then(d => { D = d; init(); });
+
+function init() {
+  const repo = D.repo;
+  $("repo-link").href = repo; $("repo-foot").href = repo;
+  $("paper-link").href = repo + "/tree/main/outputs";
+  $("built").textContent = D.built_utc.slice(0, 10);
+  kpis();
+  const sel = $("issue");
+  D.issues.slice().reverse().forEach(i => sel.add(new Option(i.issued, i.issued)));
+  sel.onchange = live;
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => tab(b.dataset.tab));
+  document.querySelectorAll('input[name="src"]').forEach(i => i.onchange = scores);
+  document.querySelectorAll('input[name="rh"],input[name="rs"]').forEach(i => i.onchange = rmse);
+  document.querySelectorAll('input[name="hh"],input[name="hm"]').forEach(i => i.onchange = heat);
+  live();
+}
+
+function tab(name) {
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("on", p.id === "tab-" + name));
+  ({ live, scores, rmse, heat })[name]?.();
+}
+
+function kpis() {
+  const wins = rows => rows.filter(r => r.AR_LLM_ratio < 1).length;
+  const n = D.main.length;
+  const sc = D.scorecard.filter(r => D.headline.includes(r.variable));
+  const nLive = D.issues.reduce((a, i) => a + i.forecasts.filter(f => D.headline.includes(f.variable)).length, 0);
+  const closer = sc.filter(r => r.LLM_closer === true || r.LLM_closer === "True").length;
+  const cards = [
+    [`${sc.length} / ${nLive}`, "Live headline calls resolved (first-release data)", C.blue],
+    [sc.length ? `${closer} / ${sc.length}` : "pending", "Live: AR+LLM closer than AR", C.green],
+    [`${wins(D.main)} / ${n}`, "Backtest 2020–24: AR+LLM beats AR", C.purple],
+    [`${wins(D.main_covid)} / ${n}`, "Backtest with COVID dummies (live spec)", C.amber],
+  ];
+  $("kpis").innerHTML = cards.map(([v, l, c]) =>
+    `<div class="card kpi" style="--c:${c}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+}
+
+/* ── Live record ─────────────────────────────────────────── */
+function live() {
+  const issue = D.issues.find(i => i.issued === $("issue").value) || D.issues.at(-1);
+  if (!issue) { $("live-charts").innerHTML = "<p>No forecasts issued yet.</p>"; return; }
+  const sha = issue.meta.sha256 || "";
+  $("proof").innerHTML = `Timestamp: <a href="${D.repo}/tree/${issue.tag}">git tag ${issue.tag}</a>
+    · latest Fed text: minutes of ${issue.meta.latest_documents.fomc_minutes_meeting},
+    Beige Book of ${issue.meta.latest_documents.beige_book_release}
+    <br>SHA-256 of the forecast file: <code>${sha}</code>`;
+  const outcome = (v, q) => D.scorecard.find(r => r.variable === v && r.target_quarter === q
+                                            && r.issued_utc.startsWith(issue.issued));
+  const vars = [...D.headline, ...Object.keys(D.labels).filter(v => !D.headline.includes(v))];
+
+  // charts: headline variables
+  const box = $("live-charts"); box.innerHTML = "";
+  D.headline.forEach(v => {
+    const div = document.createElement("div"); div.style.height = "300px"; box.appendChild(div);
+    const fc = issue.forecasts.filter(f => f.variable === v);
+    const tr = [];
+    if (D.history) {
+      const x = [], y = [];
+      D.history.quarters.forEach((q, i) => { if (D.history[v][i] != null) { x.push(q2n(q)); y.push(D.history[v][i]); } });
+      tr.push({ x, y, mode: "lines+markers", line: { color: C.ink2, width: 1.6 }, marker: { size: 4, color: C.ink2 },
+                name: "Published", hovertemplate: "%{y:.2f}<extra>published</extra>",
+                text: D.history.quarters });
+    }
+    tr.push({ x: fc.map(f => q2n(f.target_quarter)), y: fc.map(f => f.AR), mode: "markers", name: "AR only",
+              marker: { size: 10, color: "rgba(0,0,0,0)", line: { color: C.grey, width: 2 } },
+              hovertemplate: "AR only %{y:.2f}<extra></extra>" });
+    tr.push({ x: fc.map(f => q2n(f.target_quarter)), y: fc.map(f => f.AR_LLM), mode: "markers", name: "AR+LLM",
+              marker: { size: 9, color: C.blue },
+              error_y: { type: "data", symmetric: false, color: C.blue, thickness: 1.5, width: 4,
+                         array: fc.map(f => f.AR_LLM_hi68 - f.AR_LLM),
+                         arrayminus: fc.map(f => f.AR_LLM - f.AR_LLM_lo68) },
+              customdata: fc.map(f => [f.target_quarter, f.AR_LLM_lo68, f.AR_LLM_hi68]),
+              hovertemplate: "%{customdata[0]}: <b>%{y:.2f}</b><br>68%: %{customdata[1]:.2f} to %{customdata[2]:.2f}<extra>AR+LLM</extra>" });
+    const bm = issue.benchmarks.filter(b => b.variable === v);
+    if (bm.length) tr.push({ x: bm.map(b => q2n(b.target_quarter) + 0.06), y: bm.map(b => b.value), mode: "markers",
+              name: "Outside", marker: { symbol: "diamond", size: 9, color: C.amber },
+              text: bm.map(b => BENCH_SHORT(b.source)), hovertemplate: "%{text} %{y:.2f}<extra></extra>" });
+    const done = fc.map(f => outcome(v, f.target_quarter)).filter(Boolean);
+    if (done.length) tr.push({ x: done.map(r => q2n(r.target_quarter)), y: done.map(r => r.actual), mode: "markers",
+              name: "First release", marker: { symbol: "x", size: 10, color: C.ink },
+              hovertemplate: "First release %{y:.2f}<extra></extra>" });
+    const yr = Math.floor(q2n(D.history ? D.history.quarters[0] : fc[0].target_quarter));
+    const xmax = Math.max(...fc.map(f => q2n(f.target_quarter)));
+    const ticks = []; for (let t = yr; t <= xmax + 0.3; t++) ticks.push(t);
+    Plotly.newPlot(div, tr, {
+      title: { text: `${SHORT[v]} <span style="font-size:11px;color:#888">${UNIT[v]}</span>`, font: { size: 13, family: FONT.family }, x: 0.02 },
+      margin: { l: 40, r: 10, t: 36, b: 30 }, showlegend: false, font: FONT,
+      plot_bgcolor: "#fff", paper_bgcolor: "#fff", hovermode: "closest",
+      xaxis: { range: [yr - 0.15, xmax + 0.3], tickvals: ticks, ticktext: ticks.map(String),
+               gridcolor: "#f0f0f0", fixedrange: true },
+      yaxis: { gridcolor: "#f0f0f0", zeroline: false, fixedrange: true },
+      shapes: [{ type: "line", xref: "x", yref: "paper", x0: q2n(issue.issued.slice(0,4) + "Q" + (Math.floor((+issue.issued.slice(5,7) - 1) / 3) + 1)) - 0.02,
+                 x1: q2n(issue.issued.slice(0,4) + "Q" + (Math.floor((+issue.issued.slice(5,7) - 1) / 3) + 1)) - 0.02,
+                 y0: 0, y1: 1, line: { color: "#ccc", dash: "dot", width: 1 } }],
+    }, CFG);
+  });
+
+  requestAnimationFrame(() => box.querySelectorAll(".js-plotly-plot").forEach(d => Plotly.Plots.resize(d)));
+
+  // table
+  const benchTxt = (v, q) => issue.benchmarks.filter(b => b.variable === v && b.target_quarter === q)
+                                 .map(b => `${BENCH_SHORT(b.source)} ${b.value}`).join(" · ") || "–";
+  let html = `<tr><th class="l">Variable</th><th>Latest</th><th>Target</th><th>Call (AR+LLM)</th>
+              <th>68% range</th><th>AR only</th><th class="l">Outside forecasts</th><th>First release</th><th class="l">Result</th></tr>`;
+  let shownGroup = false;
+  vars.forEach(v => {
+    const muted = !D.headline.includes(v);
+    if (muted && !shownGroup) { html += `<tr class="group"><td colspan="9">Also recorded and graded, not headlined</td></tr>`; shownGroup = true; }
+    issue.forecasts.filter(f => f.variable === v).forEach((f, k) => {
+      const o = outcome(v, f.target_quarter);
+      const res = !o ? `<span class="pill wait">pending</span>`
+        : (o.LLM_closer === true || o.LLM_closer === "True") ? `<span class="pill win">text beat AR</span>`
+        : `<span class="pill loss">AR closer</span>`;
+      html += `<tr class="${muted ? "muted" : ""}">
+        <td class="l">${k === 0 ? SHORT[v] : ""}</td>
+        <td>${k === 0 ? `${fmt(f.last_obs_value)} <span style="color:#999;font-size:11px">${f.last_obs_quarter}</span>` : ""}</td>
+        <td>${f.target_quarter}</td><td class="call">${fmt(f.AR_LLM)}</td>
+        <td>${fmt(f.AR_LLM_lo68)} to ${fmt(f.AR_LLM_hi68)}</td><td>${fmt(f.AR)}</td>
+        <td class="l">${benchTxt(v, f.target_quarter)}</td><td>${o ? fmt(o.actual) : "–"}</td><td class="l">${res}</td></tr>`;
+    });
+  });
+  $("live-table").innerHTML = html;
+}
+
+/* ── LLM scores ──────────────────────────────────────────── */
+function scores() {
+  const src = radio("src");
+  const dims = ["growth_expectations", "inflation_concern", "labor_market", "credit_conditions", "policy_uncertainty"];
+  const titles = ["Growth expectations", "Inflation concern", "Labor market", "Credit conditions", "Policy uncertainty"];
+  const FOMC = ["#1a4e8c", "#c0392b", "#0f6e56", "#d68910", "#533fad"];
+  const BB = ["#5b9bd5", "#e07070", "#3fbf9f", "#f5b942", "#a080e0"];
+  const pre = src === "fomc" ? ["fomc_minutes_"] : src === "bb" ? ["beige_book_"] : ["fomc_minutes_", "beige_book_"];
+  const x = D.scores.quarters.map(q2n);
+  const tr = [], shapes = [], ann = [];
+  const bands = [[2008.75, 2009.5, "rgba(231,76,60,0.10)", "GFC"], [2020.0, 2020.5, "rgba(241,196,15,0.18)", "COVID"],
+                 [2021.5, 2023.5, "rgba(230,126,34,0.12)", "Inflation surge"], [2025.0, x.at(-1) + 0.2, "rgba(26,78,140,0.07)", "Live sample"]];
+  dims.forEach((dim, i) => {
+    const ax = i === 0 ? "" : i + 1;
+    bands.forEach(([a, b, c, l]) => {
+      shapes.push({ type: "rect", xref: "x", yref: "y" + ax, x0: a, x1: b, y0: -2.4, y1: 2.4, fillcolor: c, line: { width: 0 }, layer: "below" });
+      if (i === 0) ann.push({ x: (a + b) / 2, y: 2.15, xref: "x", yref: "y", text: l, showarrow: false, font: { size: 9, color: "#999" } });
+    });
+    shapes.push({ type: "line", xref: "x", yref: "y" + ax, x0: 2007.5, x1: x.at(-1) + 0.2, y0: 0, y1: 0, line: { color: "#bbb", dash: "dot", width: 0.8 } });
+    pre.forEach(p => {
+      const col = D.scores[p + dim], clr = (p.startsWith("fomc") ? FOMC : BB)[i];
+      tr.push({ x, y: col, xaxis: "x", yaxis: "y" + ax, mode: "lines+markers", connectgaps: false,
+                line: { color: clr, width: 1.6 }, marker: { size: 3, color: clr },
+                name: (p.startsWith("fomc") ? "FOMC " : "Beige Book ") + titles[i].toLowerCase(),
+                text: D.scores.quarters, hovertemplate: "%{text}: %{y:.2f}<extra>%{fullData.name}</extra>" });
+    });
+  });
+  const layout = { grid: { rows: 5, columns: 1, pattern: "coupled", roworder: "top to bottom", ygap: 0.3 }, height: 640,
+    margin: { l: 50, r: 16, t: 24, b: 30 }, showlegend: false, font: FONT, shapes, plot_bgcolor: "#fff", paper_bgcolor: "#fff",
+    annotations: ann.concat(titles.map((t, i) => ({ text: `<b>${t}</b>`, xref: "paper", yref: `y${i ? i + 1 : ""} domain`,
+      x: 0, y: 1.12, showarrow: false, xanchor: "left", font: { size: 11 } }))) };
+  dims.forEach((_, i) => {
+    const k = i === 0 ? "" : i + 1;
+    layout["yaxis" + k] = { range: [-2.4, 2.4], tickvals: [-2, -1, 0, 1, 2], tickfont: { size: 9 }, gridcolor: "#f3f3f3" };
+
+  });
+  layout.xaxis = { range: [src === "bb" ? 2011 : 2007.5, x.at(-1) + 0.2], gridcolor: "#f3f3f3", dtick: 2 };
+  Plotly.newPlot("scores-chart", tr, layout, CFG);
+}
+
+/* ── RMSE comparison ─────────────────────────────────────── */
+function rmse() {
+  const h = +radio("rh"), rows = radio("rs") === "covid" ? D.main_covid : D.main;
+  const hs = h === 0 ? [1, 2] : [h];
+  const vars = Object.keys(D.labels), labels = vars.map(v => SHORT[v]);
+  const tr = [], layout = { barmode: "group", height: 520, font: FONT, plot_bgcolor: "#fff", paper_bgcolor: "#fff",
+    margin: { l: 55, r: 16, t: 60, b: 110 }, legend: { orientation: "h", y: 1.12, font: { size: 10 } },
+    grid: { rows: 1, columns: hs.length, pattern: "independent" }, shapes: [], annotations: [] };
+  hs.forEach((hh, i) => {
+    const k = i === 0 ? "" : i + 1, xa = "x" + k, ya = "y" + k;
+    const get = (v, c) => { const r = rows.find(r => r.variable === v && r.horizon === hh); return r ? r[c] : null; };
+    const sig = (v, c) => { const s = get(v, c); return s && s !== "nan" ? s : ""; };
+    const show = i === 0;
+    tr.push({ type: "bar", x: labels, y: vars.map(() => 1), name: "AR (= 1.0)", marker: { color: C.grey }, opacity: .55, xaxis: xa, yaxis: ya, showlegend: show, offsetgroup: "a" });
+    tr.push({ type: "bar", x: labels, y: vars.map(v => get(v, "BVAR_ratio")), name: "BVAR / AR", marker: { color: C.blue }, opacity: .75, xaxis: xa, yaxis: ya, showlegend: show, offsetgroup: "b" });
+    tr.push({ type: "bar", x: labels, y: vars.map(v => get(v, "BVAR_LLM_ratio")), name: "BVAR+LLM / AR",
+              marker: { color: vars.map(v => get(v, "BVAR_LLM_ratio") < get(v, "BVAR_ratio") ? C.green : "#a8d5c4") }, opacity: .85,
+              text: vars.map(v => sig(v, "BVAR_LLM_dm_sig")), textposition: "outside", textfont: { color: C.red, size: 10 },
+              xaxis: xa, yaxis: ya, showlegend: show, offsetgroup: "c" });
+    tr.push({ type: "bar", x: labels, y: vars.map(v => get(v, "AR_LLM_ratio")), name: "AR+LLM / AR",
+              marker: { color: vars.map(v => get(v, "AR_LLM_ratio") < 1 ? C.purple : "#d7bde2") }, opacity: .9,
+              text: vars.map(v => sig(v, "AR_LLM_dm_sig")), textposition: "outside", textfont: { color: C.purple, size: 10 },
+              xaxis: xa, yaxis: ya, showlegend: show, offsetgroup: "d" });
+    layout.shapes.push({ type: "line", xref: xa + " domain", yref: ya, x0: 0, x1: 1, y0: 1, y1: 1, line: { color: "#000", dash: "dash", width: 1.2 } });
+    layout.annotations.push({ text: `<b>h = ${hh}</b>`, xref: xa + " domain", yref: ya + " domain", x: 0.5, y: 1.06, showarrow: false });
+    layout["xaxis" + k] = { tickangle: -35, tickfont: { size: 10 } };
+    layout["yaxis" + k] = { title: i === 0 ? "RMSE ratio (vs AR)" : "", rangemode: "tozero", gridcolor: "#f0f0f0" };
+  });
+  Plotly.newPlot("rmse-chart", tr, layout, CFG);
+}
+
+/* ── Sub-period heatmap ──────────────────────────────────── */
+function heat() {
+  const h = +radio("hh"), m = radio("hm");
+  const [llm, base, lbl] = m === "ar" ? ["AR_LLM", "AR", "AR+LLM vs AR"] : ["BVAR_LLM", "BVAR", "BVAR+LLM vs BVAR"];
+  const periods = ["COVID shock", "Inflation surge", "Soft landing"], vars = Object.keys(D.labels);
+  const rm = (p, mod, v) => (D.subperiod.find(r => r.period === p && r.model === mod && r.variable === v && r.horizon === h) || {}).rmse;
+  const z = vars.map(v => periods.map(p => { const b = rm(p, base, v), l = rm(p, llm, v); return b ? (l - b) / b * 100 : null; }));
+  Plotly.newPlot("heat-chart", [{ type: "heatmap", z, x: periods, y: vars.map(v => SHORT[v]),
+    text: z.map(r => r.map(c => c == null ? "" : (c > 0 ? "+" : "") + c.toFixed(0) + "%")), texttemplate: "%{text}",
+    textfont: { size: 12, family: FONT.family },
+    colorscale: [[0, "#1a8c4e"], [0.45, "#d5f5e3"], [0.5, "#fdfefe"], [0.55, "#fde8d8"], [1, "#c0392b"]],
+    zmin: -65, zmax: 65, colorbar: { title: { text: "% RMSE change", font: { size: 11 } }, thickness: 16, tickfont: { size: 9 } },
+    hovertemplate: "<b>%{y}</b><br>%{x}<br>%{text}<extra></extra>" }],
+    { title: { text: `${lbl}: RMSE change by sub-period (h = ${h})`, font: { size: 13, family: FONT.family } },
+      height: 460, margin: { l: 150, r: 90, t: 55, b: 50 }, font: FONT, yaxis: { autorange: "reversed" }, plot_bgcolor: "#fff", paper_bgcolor: "#fff" }, CFG);
+}
+</script>
+</body>
+</html>
