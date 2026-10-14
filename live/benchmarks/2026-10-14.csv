@@ -1,0 +1,8 @@
+variable,target_quarter,source,value,as_of,definition_note,url
+GDPC1_gr,2026Q3,Atlanta Fed GDPNow,3.6,2026-10-08,"q/q saar %, nowcast uses Q3 monthly data",https://www.atlantafed.org/cqer/research/gdpnow
+GDPC1_gr,2026Q3,SPF median (Q3 2026 survey),2.5,2026-08-14,q/q saar %,https://www.philadelphiafed.org/surveys-and-data/real-time-data-research/spf-q3-2026
+GDPC1_gr,2026Q4,SPF median (Q3 2026 survey),2.3,2026-08-14,q/q saar %,https://www.philadelphiafed.org/surveys-and-data/real-time-data-research/spf-q3-2026
+PCEPILFE_yoy,2026Q3,Cleveland Fed inflation nowcast,3.02,2026-10-13,"Sept 2026 y/y %, same definition as the model",https://www.clevelandfed.org/indicators-and-data/inflation-nowcasting
+UNRATE,2026Q4,SPF median (Q3 2026 survey),4.3,2026-08-14,"quarterly average; the model targets the December value",https://www.philadelphiafed.org/surveys-and-data/real-time-data-research/spf-q3-2026
+UNRATE,2027Q1,SPF median (Q3 2026 survey),4.3,2026-08-14,"quarterly average; the model targets the March value",https://www.philadelphiafed.org/surveys-and-data/real-time-data-research/spf-q3-2026
+FEDFUNDS,2026Q4,Fed funds futures (Investing.com Fed Rate Monitor),4.19,2026-10-14,"December average effective rate implied by meeting probabilities (Oct 28: 39.1% hold / 60.9% +25bp; Dec 9: 3.6% / 41.2% / 55.2% for 3.75-4.00 / 4.00-4.25 / 4.25-4.50), EFFR at range midpoint (DFF 3.88)",https://www.investing.com/central-banks/fed-rate-monitor

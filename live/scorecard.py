@@ -118,6 +118,20 @@ def main():
     summ = done.groupby(["variable", "h"]).agg(**stats)
     summ["rmse_ratio"] = summ["rmse_AR_LLM"] / summ["rmse_AR"]
     print(summ.round(3).to_string())
+    bench_files = sorted((LIVE / "benchmarks").glob("*.csv"))
+    if bench_files:
+        bench = pd.concat([pd.read_csv(f).assign(issued=f.stem) for f in bench_files])
+        ours = done.assign(issued=done["issued_utc"].str[:10])
+        b = bench.merge(ours[["issued", "variable", "target_quarter", "AR", "AR_LLM", "actual"]],
+                        on=["issued", "variable", "target_quarter"])
+        if len(b):
+            b["err_bench"] = b["value"] - b["actual"]
+            b["AR_LLM_closer"] = (b["AR_LLM"] - b["actual"]).abs() < b["err_bench"].abs()
+            b.to_csv(LIVE / "scorecard_benchmarks.csv", index=False)
+            print("\nAgainst outside forecasts:")
+            print(b[["issued", "variable", "target_quarter", "source", "value",
+                     "AR_LLM", "actual", "AR_LLM_closer"]].to_string(index=False))
+
     pooled = done[["LLM_closer", "in_68", "in_90", "direction_right"]].mean()
     print(f"\nAll resolved forecasts (n={len(done)}): "
           f"AR+LLM closer than AR {pooled['LLM_closer']:.0%} | "

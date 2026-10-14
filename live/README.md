@@ -46,5 +46,9 @@ git push && git push --tags
 .venv-arm/bin/python live/scorecard.py            # grade whatever has resolved
 ```
 
+`benchmarks/YYYY-MM-DD.csv` records the outside forecasts available on the
+issue date (SPF, GDPNow, Cleveland Fed nowcast, fed funds futures) with their
+definitions; `scorecard.py` grades them against the same first releases.
+
 `forecasts/YYYY-MM-DD.md` holds the table for the post and the SHA-256 of the
 JSON file. The tag pushed to GitHub is the timestamp of record.
