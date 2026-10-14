@@ -183,7 +183,9 @@ def to_markdown(meta: dict, rows: list[dict]) -> str:
         lines.append(f"| {r['label']} | {r['last_obs_value']:.2f} ({r['last_obs_quarter']}) "
                      f"| {r['target_quarter']} | {r['AR']:.2f} | **{r['AR_LLM']:.2f}** "
                      f"| {r['AR_LLM_lo68']:.2f} to {r['AR_LLM_hi68']:.2f} |")
-    lines += ["", f"Latest Fed text in the model: {meta['latest_documents']}",
+    d = meta["latest_documents"]
+    lines += ["", f"Latest Fed text in the model: minutes of the {d['fomc_minutes_meeting']} "
+                  f"FOMC meeting and the Beige Book of {d['beige_book_release']}",
               f"SHA-256 of the forecast file: {meta['sha256']}"]
     return "\n".join(lines)
 

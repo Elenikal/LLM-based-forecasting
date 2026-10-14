@@ -43,6 +43,7 @@ as they are.
 .venv-arm/bin/python live/forecast.py             # record it
 git add live && git commit -m "Forecast YYYY-MM-DD" && git tag fc-YYYY-MM-DD
 git push && git push --tags
+.venv-arm/bin/python live/make_post.py YYYY-MM-DD    # table.png + post.md for Substack
 .venv-arm/bin/python live/scorecard.py            # grade whatever has resolved
 ```
 
