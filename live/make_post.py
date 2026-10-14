@@ -24,6 +24,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 LIVE = Path(__file__).resolve().parent
+
+# Headline set, declared 2026-10-14 before any outcome: the variables where the
+# backtest and the COVID robustness check show value in the text. GDP is still
+# forecast, recorded and scored, but not headlined.
+HEADLINE = ["CPIAUCSL_yoy", "PCEPILFE_yoy", "UNRATE", "FEDFUNDS", "T10Y2Y"]
 REPO = "https://github.com/Elenikal/LLM-based-forecasting"
 
 INK, INK_2, INK_3 = "#0b0b0b", "#52514e", "#8a8984"
@@ -98,8 +103,8 @@ def table_png(rows: list[dict], bench: pd.DataFrame, issued: str, out: Path):
     ax.plot([0.012, 0.988], [y, y], color=INK_3, lw=0.8)
     ax.text(0.012, y - 0.22, f"Timestamped: git tag fc-{issued} · {REPO.removeprefix('https://')}",
             fontsize=7, color=INK_3, va="center")
-    ax.text(0.988, y - 0.22, "Scored against first-release data", fontsize=7, color=INK_3,
-            ha="right", va="center")
+    ax.text(0.988, y - 0.22, "GDP also recorded and scored in the repo · first-release data",
+            fontsize=7, color=INK_3, ha="right", va="center")
     fig.savefig(out, facecolor=SURFACE)
     plt.close(fig)
 
@@ -114,7 +119,8 @@ def main():
     out = LIVE / "posts" / issued
     out.mkdir(parents=True, exist_ok=True)
 
-    table_png(rec["forecasts"], bench, issued, out / "table.png")
+    rows = [r for r in rec["forecasts"] if r["variable"] in HEADLINE]
+    table_png(rows, bench, issued, out / "table.png")
 
     docs = rec["meta"]["latest_documents"]
     srcs = bench.drop_duplicates("source")

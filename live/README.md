@@ -20,6 +20,14 @@ edited after it is committed.
   Later documents use the same prompt, temperature 0.3 and 3 runs
   (`llm_scores_live.csv`, per-document detail in `doc_scores/`).
 
+## Headline set (declared 2026-10-14, before any outcome)
+
+Posts headline inflation (CPI, core PCE), unemployment, the fed funds rate and
+the 10Y–2Y spread: the variables where the corrected backtest and the COVID
+robustness check find value in the text. GDP is still forecast, recorded in
+`forecasts/` and graded by `scorecard.py`; it is not headlined, because the
+text adds nothing for output once the COVID quarters are controlled for.
+
 ## What is different in real time
 
 - **Ragged edge.** Each variable's window ends at its last complete quarter,
