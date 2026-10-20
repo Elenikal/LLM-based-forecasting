@@ -314,6 +314,7 @@ function live() {
     issue.forecasts.filter(f => f.variable === v).forEach((f, k) => {
       const o = outcome(v, f.target_quarter);
       const res = !o ? `<span class="pill wait">pending</span>`
+        : (o.tie === true || o.tie === "True") ? `<span class="pill wait">tie with AR</span>`
         : (o.LLM_closer === true || o.LLM_closer === "True") ? `<span class="pill win">text beat AR</span>`
         : `<span class="pill loss">AR closer</span>`;
       html += `<tr class="${muted ? "muted" : ""}">

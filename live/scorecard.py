@@ -95,7 +95,8 @@ def main():
     done = log.dropna(subset=["actual"]).copy()
     done["err_AR"] = done["AR"] - done["actual"]
     done["err_AR_LLM"] = done["AR_LLM"] - done["actual"]
-    done["LLM_closer"] = done["err_AR_LLM"].abs() < done["err_AR"].abs()
+    done["LLM_closer"] = done["err_AR_LLM"].abs().round(4) < done["err_AR"].abs().round(4)
+    done["tie"] = done["err_AR_LLM"].abs().round(4) == done["err_AR"].abs().round(4)
     done["in_68"] = done["actual"].between(done["AR_LLM_lo68"], done["AR_LLM_hi68"])
     done["in_90"] = done["actual"].between(done["AR_LLM_lo90"], done["AR_LLM_hi90"])
     done["direction_right"] = (np.sign(done["AR_LLM"] - done["last_obs_value"]) ==
@@ -126,11 +127,14 @@ def main():
                         on=["issued", "variable", "target_quarter"])
         if len(b):
             b["err_bench"] = b["value"] - b["actual"]
-            b["AR_LLM_closer"] = (b["AR_LLM"] - b["actual"]).abs() < b["err_bench"].abs()
+            d_ours = (b["AR_LLM"] - b["actual"]).abs().round(4)
+            d_bench = b["err_bench"].abs().round(4)
+            b["AR_LLM_closer"] = d_ours < d_bench
+            b["tie"] = d_ours == d_bench
             b.to_csv(LIVE / "scorecard_benchmarks.csv", index=False)
             print("\nAgainst outside forecasts:")
             print(b[["issued", "variable", "target_quarter", "source", "value",
-                     "AR_LLM", "actual", "AR_LLM_closer"]].to_string(index=False))
+                     "AR_LLM", "actual", "AR_LLM_closer", "tie"]].to_string(index=False))
 
     pooled = done[["LLM_closer", "in_68", "in_90", "direction_right"]].mean()
     print(f"\nAll resolved forecasts (n={len(done)}): "

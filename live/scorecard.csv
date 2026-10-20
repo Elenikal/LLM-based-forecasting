@@ -1,1 +1,1 @@
-variable,label,last_obs_quarter,last_obs_value,h,target_quarter,AR,AR_LLM,AR_LLM_lo68,AR_LLM_hi68,AR_LLM_lo90,AR_LLM_hi90,issued_utc,sha256,actual,err_AR,err_AR_LLM,LLM_closer,in_68,in_90,direction_right
+variable,label,last_obs_quarter,last_obs_value,h,target_quarter,AR,AR_LLM,AR_LLM_lo68,AR_LLM_hi68,AR_LLM_lo90,AR_LLM_hi90,issued_utc,sha256,actual,err_AR,err_AR_LLM,LLM_closer,tie,in_68,in_90,direction_right
