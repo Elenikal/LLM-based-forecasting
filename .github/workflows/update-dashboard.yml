@@ -1,0 +1,53 @@
+name: Update live record and dashboard
+
+# Grades recorded forecasts against first-release data and refreshes docs/.
+# Never issues forecasts and never edits live/forecasts/ or forecast_log.csv.
+on:
+  schedule:
+    - cron: "0 15 * * 1-5"    # 11:00 ET weekdays, after 8:30/10:00 data releases reach FRED
+    - cron: "0 22 * * 1-5"    # 18:00 ET weekdays, catches late FRED updates
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-dashboard
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: live/requirements.txt
+
+      - name: Install
+        run: pip install -r live/requirements.txt matplotlib
+
+      - name: Grade forecasts and rebuild site data
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: |
+          python -W ignore live/scorecard.py
+          python -W ignore live/build_site.py
+
+      - name: Refuse to touch the record
+        run: |
+          if ! git diff --quiet -- live/forecasts live/forecast_log.csv live/benchmarks; then
+            echo "::error::recorded forecasts changed; aborting"; git diff --stat; exit 1
+          fi
+
+      - name: Commit if anything changed
+        run: |
+          git add live/scorecard.csv live/scorecard_benchmarks.csv docs/data/site.json 2>/dev/null || true
+          if git diff --cached --quiet; then echo "No new data."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Auto-update: scorecard and dashboard data ($(date -u +%Y-%m-%d))"
+          git push

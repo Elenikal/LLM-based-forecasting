@@ -44,9 +44,20 @@ the whole history is re-scored with one current model, the backtest is re-run on
 those scores, and the switch date is logged here. Forecasts already issued stay
 as they are.
 
+## Automatic updates
+
+`.github/workflows/update-dashboard.yml` runs on GitHub at 11:00 and 18:00 ET on
+weekdays (and on demand from the Actions tab). It grades recorded forecasts
+against first-release data (`scorecard.py`), rebuilds `docs/data/site.json`, and
+commits only if something changed. It never issues forecasts and aborts if
+anything in `forecasts/`, `forecast_log.csv` or `benchmarks/` would change.
+Needs the repository secret `FRED_API_KEY`. Because it commits to `main`,
+run `git pull` before working locally.
+
 ## Each cycle (after the Beige Book, before the FOMC decision)
 
 ```bash
+git pull                                          # pick up automatic updates
 .venv-arm/bin/python live/forecast.py --dry-run   # look first
 .venv-arm/bin/python live/forecast.py             # record it
 git add live && git commit -m "Forecast YYYY-MM-DD" && git tag fc-YYYY-MM-DD

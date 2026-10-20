@@ -91,7 +91,15 @@ def main():
         site["history"] = None
 
     (DOCS / "data").mkdir(parents=True, exist_ok=True)
-    (DOCS / "data" / "site.json").write_text(json.dumps(site, indent=1))
+    target = DOCS / "data" / "site.json"
+    if target.exists():                          # skip rewrite if only the timestamp moved
+        old = json.loads(target.read_text())
+        if {k: v for k, v in old.items() if k != "built_utc"} == \
+           {k: v for k, v in json.loads(json.dumps(site)).items() if k != "built_utc"}:
+            print("No change in site data.")
+            (DOCS / ".nojekyll").touch()
+            return
+    target.write_text(json.dumps(site, indent=1))
     (DOCS / ".nojekyll").touch()
     print(f"Wrote {DOCS / 'data' / 'site.json'}")
 
